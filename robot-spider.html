@@ -1,0 +1,526 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Robot Spider Cursor</title>
+  <style>
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      background: #0a0e14;
+      color: #00ffe0;
+      font-family: 'Courier New', monospace;
+      overflow: hidden;
+      cursor: none;
+      width: 100vw;
+      height: 100vh;
+    }
+
+    canvas {
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      pointer-events: none;
+      z-index: 10;
+    }
+
+    /* ── HUD ── */
+    #hud {
+      position: fixed;
+      top: 16px; left: 18px;
+      font-size: 11px;
+      color: #00ffe0;
+      opacity: 0.65;
+      z-index: 20;
+      line-height: 1.8;
+      pointer-events: none;
+    }
+    #hud span { color: #ffe066; }
+
+    /* ── Corner decorations ── */
+    .corner {
+      position: fixed;
+      width: 24px; height: 24px;
+      border-color: #00ffe040;
+      border-style: solid;
+      z-index: 20;
+      pointer-events: none;
+    }
+    .corner.tl { top:10px; left:10px;  border-width: 1px 0 0 1px; }
+    .corner.tr { top:10px; right:10px; border-width: 1px 1px 0 0; }
+    .corner.bl { bottom:10px; left:10px;  border-width: 0 0 1px 1px; }
+    .corner.br { bottom:10px; right:10px; border-width: 0 1px 1px 0; }
+
+    /* ── Hint ── */
+    #hint {
+      position: fixed;
+      top: 50%; left: 50%;
+      transform: translate(-50%, -50%);
+      font-size: 13px;
+      color: #00ffe060;
+      z-index: 20;
+      pointer-events: none;
+      text-align: center;
+      transition: opacity 0.8s;
+      letter-spacing: 0.15em;
+    }
+
+    /* ── Demo page content (behind everything) ── */
+    #page {
+      position: fixed;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 28px;
+      z-index: 0;
+    }
+    #page h1 {
+      font-size: clamp(2rem, 5vw, 4rem);
+      font-weight: 400;
+      letter-spacing: 0.3em;
+      color: #00ffe018;
+      text-transform: uppercase;
+    }
+    #page p {
+      font-size: 12px;
+      color: #00ffe025;
+      letter-spacing: 0.25em;
+    }
+  </style>
+</head>
+<body>
+
+<!-- Corners -->
+<div class="corner tl"></div>
+<div class="corner tr"></div>
+<div class="corner bl"></div>
+<div class="corner br"></div>
+
+<!-- HUD -->
+<div id="hud">
+  SYS:&nbsp;<span id="h-status">STANDBY</span><br>
+  POS:&nbsp;<span id="h-pos">---</span><br>
+  SPD:&nbsp;<span id="h-spd">0</span> px/s<br>
+  LEG:&nbsp;<span id="h-leg">IDLE</span>
+</div>
+
+<!-- Hint -->
+<div id="hint">[ mova o mouse para ativar ]</div>
+
+<!-- Background page content -->
+<div id="page">
+  <h1>UNIT-7</h1>
+  <p>autonomous tracking system · online</p>
+</div>
+
+<!-- Canvas for robot + effects -->
+<canvas id="c"></canvas>
+
+<script>
+(function () {
+  const cv  = document.getElementById('c');
+  const ctx = cv.getContext('2d');
+  const hint    = document.getElementById('hint');
+  const hStatus = document.getElementById('h-status');
+  const hPos    = document.getElementById('h-pos');
+  const hSpd    = document.getElementById('h-spd');
+  const hLeg    = document.getElementById('h-leg');
+
+  let W, H;
+  function resize() {
+    W = cv.width  = window.innerWidth;
+    H = cv.height = window.innerHeight;
+  }
+  resize();
+  window.addEventListener('resize', resize);
+
+  /* ─── State ─── */
+  let mx = -999, my = -999;
+  let rx, ry;           // robot position
+  let vx = 0, vy = 0;
+  let angle = 0, targetAngle = 0;
+  let moved = false;
+  let frame = 0;
+  let walkPhase = 0;
+  let speed = 0;
+
+  /* ─── Trail ─── */
+  const trail = [];
+
+  /* ─── Input ─── */
+  window.addEventListener('mousemove', e => {
+    mx = e.clientX;
+    my = e.clientY;
+    if (!moved) {
+      moved = true;
+      hint.style.opacity = '0';
+      rx = mx; ry = my;
+    }
+  });
+
+  /* ─── Math helpers ─── */
+  function lerp(a, b, t) { return a + (b - a) * t; }
+  function lerpAngle(a, b, t) {
+    let d = b - a;
+    while (d >  Math.PI) d -= Math.PI * 2;
+    while (d < -Math.PI) d += Math.PI * 2;
+    return a + d * t;
+  }
+
+  /* ─── Leg IK ─── */
+  function legIK(bx, by, tx, ty, l1, l2) {
+    const dx = tx - bx, dy = ty - by;
+    const dist = Math.min(Math.sqrt(dx*dx + dy*dy), l1 + l2 - 0.1);
+    const cosA2 = (l1*l1 + l2*l2 - dist*dist) / (2*l1*l2);
+    const a2 = Math.acos(Math.max(-1, Math.min(1, cosA2)));
+    const cosA1 = (l1*l1 + dist*dist - l2*l2) / (2*l1*dist);
+    const a1 = Math.atan2(dy, dx) - Math.acos(Math.max(-1, Math.min(1, cosA1)));
+    const midX = bx + Math.cos(a1) * l1;
+    const midY = by + Math.sin(a1) * l1;
+    const endX = midX + Math.cos(a1 + Math.PI - a2) * l2;
+    const endY = midY + Math.sin(a1 + Math.PI - a2) * l2;
+    return { mid: { x: midX, y: midY }, end: { x: endX, y: endY } };
+  }
+
+  /* ─── Draw: background ─── */
+  function drawBg() {
+    ctx.fillStyle = '#0a0e14';
+    ctx.fillRect(0, 0, W, H);
+
+    // Grid
+    ctx.strokeStyle = 'rgba(0,255,224,0.035)';
+    ctx.lineWidth = 0.5;
+    const gs = 40;
+    for (let x = 0; x < W; x += gs) {
+      ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, H); ctx.stroke();
+    }
+    for (let y = 0; y < H; y += gs) {
+      ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(W, y); ctx.stroke();
+    }
+
+    // Scanline sweep
+    const sl = (frame * 1.5) % H;
+    const sg = ctx.createLinearGradient(0, sl - 24, 0, sl + 24);
+    sg.addColorStop(0,   'rgba(0,255,224,0)');
+    sg.addColorStop(0.5, 'rgba(0,255,224,0.025)');
+    sg.addColorStop(1,   'rgba(0,255,224,0)');
+    ctx.fillStyle = sg;
+    ctx.fillRect(0, sl - 24, W, 48);
+  }
+
+  /* ─── Draw: tether line ─── */
+  function drawTether() {
+    if (!moved) return;
+    ctx.beginPath();
+    ctx.moveTo(rx, ry);
+    ctx.lineTo(mx, my);
+    ctx.strokeStyle = 'rgba(0,255,224,0.07)';
+    ctx.lineWidth = 0.6;
+    ctx.setLineDash([4, 10]);
+    ctx.stroke();
+    ctx.setLineDash([]);
+  }
+
+  /* ─── Draw: trail ─── */
+  function updateTrail() {
+    if (!moved) return;
+    if (frame % 2 === 0) {
+      trail.push({ x: rx, y: ry });
+      if (trail.length > 70) trail.shift();
+    }
+  }
+
+  function drawTrail() {
+    if (trail.length < 2) return;
+    for (let i = 1; i < trail.length; i++) {
+      const a = (i / trail.length) * 0.3;
+      ctx.beginPath();
+      ctx.moveTo(trail[i-1].x, trail[i-1].y);
+      ctx.lineTo(trail[i].x,   trail[i].y);
+      ctx.strokeStyle = `rgba(0,255,224,${a})`;
+      ctx.lineWidth = 0.7;
+      ctx.stroke();
+    }
+    for (let i = 6; i < trail.length; i += 9) {
+      const a = (i / trail.length) * 0.65;
+      ctx.beginPath();
+      ctx.arc(trail[i].x, trail[i].y, 1.5, 0, Math.PI * 2);
+      ctx.fillStyle = `rgba(0,255,224,${a})`;
+      ctx.fill();
+    }
+  }
+
+  /* ─── Draw: reticle at mouse ─── */
+  function drawReticle() {
+    if (!moved) return;
+    const r1 = 18, r2 = 27;
+    const t = frame * 0.03;
+    ctx.save();
+    ctx.translate(mx, my);
+
+    ctx.rotate(t);
+    ctx.strokeStyle = 'rgba(0,255,224,0.45)';
+    ctx.lineWidth = 0.8;
+    ctx.beginPath(); ctx.arc(0, 0, r1, 0, Math.PI * 2); ctx.stroke();
+
+    ctx.rotate(-t * 2);
+    ctx.setLineDash([4, 5]);
+    ctx.strokeStyle = 'rgba(0,255,224,0.25)';
+    ctx.beginPath(); ctx.arc(0, 0, r2, 0, Math.PI * 2); ctx.stroke();
+    ctx.setLineDash([]);
+
+    [0, Math.PI/2, Math.PI, Math.PI*3/2].forEach(a => {
+      ctx.beginPath();
+      ctx.moveTo(Math.cos(a) * (r1 + 2), Math.sin(a) * (r1 + 2));
+      ctx.lineTo(Math.cos(a) * (r1 + 9), Math.sin(a) * (r1 + 9));
+      ctx.strokeStyle = 'rgba(0,255,224,0.5)';
+      ctx.lineWidth = 1;
+      ctx.stroke();
+    });
+
+    ctx.restore();
+  }
+
+  /* ─── Draw: robot spider ─── */
+  function drawRobot(cx, cy, ang, wp, spd) {
+    ctx.save();
+    ctx.translate(cx, cy);
+    ctx.rotate(ang);
+
+    const C  = '#00ffe0';   // teal
+    const CB = '#00aaff';   // blue
+    const CY = '#ffe066';   // yellow
+    const CD = '#003344';   // dark
+    const alive = spd > 0.5;
+
+    /* ── Legs ── */
+    const legDefs = [
+      { bx: -8,  by: -10, tx: -34, ty: -30, phase: 0 },
+      { bx: -10, by:  -4, tx: -36, ty: -12, phase: Math.PI * 0.5 },
+      { bx: -10, by:   4, tx: -36, ty:  12, phase: Math.PI },
+      { bx:  -8, by:  10, tx: -34, ty:  30, phase: Math.PI * 1.5 },
+      { bx:   8, by: -10, tx:  34, ty: -30, phase: Math.PI * 0.25 },
+      { bx:  10, by:  -4, tx:  36, ty: -12, phase: Math.PI * 0.75 },
+      { bx:  10, by:   4, tx:  36, ty:  12, phase: Math.PI * 1.25 },
+      { bx:   8, by:  10, tx:  34, ty:  30, phase: Math.PI * 1.75 },
+    ];
+
+    legDefs.forEach(leg => {
+      const bounce = Math.sin(wp + leg.phase) * (alive ? 5 : 0);
+      const tx = leg.tx + Math.cos(leg.phase) * bounce;
+      const ty = leg.ty + Math.sin(leg.phase) * bounce;
+      const isStep = Math.sin(wp + leg.phase) > 0.6;
+
+      try {
+        const ik = legIK(leg.bx, leg.by, tx, ty, 17, 19);
+
+        // Segment 1
+        ctx.beginPath();
+        ctx.moveTo(leg.bx, leg.by);
+        ctx.lineTo(ik.mid.x, ik.mid.y);
+        ctx.strokeStyle = isStep ? CB : C;
+        ctx.lineWidth = 2.5;
+        ctx.lineCap = 'round';
+        ctx.stroke();
+
+        // Joint
+        ctx.beginPath();
+        ctx.arc(ik.mid.x, ik.mid.y, 2.8, 0, Math.PI * 2);
+        ctx.fillStyle = isStep ? CY : CB;
+        ctx.fill();
+
+        // Segment 2
+        ctx.beginPath();
+        ctx.moveTo(ik.mid.x, ik.mid.y);
+        ctx.lineTo(ik.end.x, ik.end.y);
+        ctx.strokeStyle = isStep ? C : CB;
+        ctx.lineWidth = 1.8;
+        ctx.stroke();
+
+        // Foot
+        ctx.beginPath();
+        ctx.arc(ik.end.x, ik.end.y, 2.2, 0, Math.PI * 2);
+        ctx.fillStyle = isStep ? CY : C;
+        ctx.fill();
+
+        if (isStep) {
+          ctx.beginPath();
+          ctx.arc(ik.end.x, ik.end.y, 6, 0, Math.PI * 2);
+          ctx.fillStyle = 'rgba(255,224,102,0.15)';
+          ctx.fill();
+        }
+      } catch (_) {}
+    });
+
+    /* ── Abdomen ── */
+    ctx.save();
+    ctx.translate(0, 13);
+    ctx.beginPath();
+    for (let i = 0; i < 6; i++) {
+      const a = (Math.PI / 3) * i - Math.PI / 6;
+      const r = i % 2 === 0 ? 14 : 12;
+      i === 0
+        ? ctx.moveTo(Math.cos(a) * r, Math.sin(a) * r)
+        : ctx.lineTo(Math.cos(a) * r, Math.sin(a) * r);
+    }
+    ctx.closePath();
+    ctx.fillStyle = '#0d1a22';
+    ctx.fill();
+    ctx.strokeStyle = C;
+    ctx.lineWidth = 1;
+    ctx.stroke();
+
+    // Circuit lines
+    ctx.strokeStyle = 'rgba(0,255,224,0.28)';
+    ctx.lineWidth = 0.6;
+    [[- 7, 0, 7, 0], [-5, -5, 5, -5], [0, -7, 0, 7]].forEach(([x1,y1,x2,y2]) => {
+      ctx.beginPath(); ctx.moveTo(x1,y1); ctx.lineTo(x2,y2); ctx.stroke();
+    });
+    [[-7,0],[-5,-5],[5,-5],[0,7]].forEach(([px,py]) => {
+      ctx.beginPath(); ctx.arc(px,py,1.3,0,Math.PI*2);
+      ctx.fillStyle = CB; ctx.fill();
+    });
+
+    // Power LED
+    const blink = Math.sin(frame * 0.09) > 0;
+    ctx.beginPath(); ctx.arc(0, 5, 2.8, 0, Math.PI * 2);
+    ctx.fillStyle = alive ? (blink ? CY : '#887700') : CD;
+    ctx.fill();
+
+    ctx.restore();
+
+    /* ── Waist ── */
+    ctx.beginPath();
+    ctx.moveTo(-6,  4); ctx.lineTo(6,  4);
+    ctx.moveTo(-6, -4); ctx.lineTo(6, -4);
+    ctx.strokeStyle = C; ctx.lineWidth = 1; ctx.stroke();
+
+    /* ── Cephalothorax ── */
+    ctx.save();
+    ctx.translate(0, -9);
+    ctx.beginPath();
+    ctx.moveTo(-10, 6); ctx.lineTo(10, 6);
+    ctx.lineTo(8, -6); ctx.lineTo(-8, -6);
+    ctx.closePath();
+    ctx.fillStyle = '#0d1a22';
+    ctx.fill();
+    ctx.strokeStyle = C; ctx.lineWidth = 1; ctx.stroke();
+
+    ctx.strokeStyle = 'rgba(0,255,224,0.22)';
+    ctx.lineWidth = 0.5;
+    ctx.beginPath(); ctx.moveTo(-8,-2); ctx.lineTo(8,-2); ctx.stroke();
+    ctx.restore();
+
+    /* ── Head ── */
+    ctx.save();
+    ctx.translate(0, -23);
+
+    // Head box
+    ctx.beginPath();
+    ctx.roundRect(-10, -8, 20, 16, 3);
+    ctx.fillStyle = '#0d1a22';
+    ctx.fill();
+    ctx.strokeStyle = C; ctx.lineWidth = 1; ctx.stroke();
+
+    // Visor
+    ctx.beginPath();
+    ctx.roundRect(-7, -4, 14, 8, 2);
+    ctx.fillStyle = alive ? 'rgba(0,170,255,0.85)' : 'rgba(0,60,80,0.8)';
+    ctx.fill();
+    ctx.strokeStyle = CB; ctx.lineWidth = 0.5; ctx.stroke();
+
+    // Visor scanline
+    const vs = ((frame * 0.55) % 8) - 4;
+    ctx.beginPath();
+    ctx.rect(-7, -4 + vs, 14, 1.2);
+    ctx.fillStyle = 'rgba(255,255,255,0.13)';
+    ctx.fill();
+
+    // Pupil
+    if (moved) {
+      const wdx = mx - cx, wdy = my - cy;
+      const lx  = Math.cos(-ang) * wdx - Math.sin(-ang) * wdy;
+      const ly  = Math.sin(-ang) * wdx + Math.cos(-ang) * wdy;
+      const pa  = Math.atan2(ly - (-23), lx);
+      const px  = Math.max(-4, Math.min(4, Math.cos(pa) * 3.5));
+      const py  = Math.max(-2.5, Math.min(2.5, Math.sin(pa) * 3.5));
+      ctx.beginPath(); ctx.arc(px, py, 2.6, 0, Math.PI * 2);
+      ctx.fillStyle = 'white'; ctx.fill();
+      ctx.beginPath(); ctx.arc(px, py, 1.2, 0, Math.PI * 2);
+      ctx.fillStyle = '#00ffe0'; ctx.fill();
+    }
+
+    // Side lights
+    [[-10, 0], [10, 0]].forEach(([lx, ly]) => {
+      ctx.beginPath(); ctx.arc(lx, ly, 1.6, 0, Math.PI * 2);
+      ctx.fillStyle = alive ? CY : CD; ctx.fill();
+    });
+
+    // Antennae
+    ctx.strokeStyle = C; ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(-3,-8); ctx.lineTo(-5,-17); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo( 3,-8); ctx.lineTo( 5,-17); ctx.stroke();
+
+    ctx.beginPath(); ctx.arc(-5,-17,2.2,0,Math.PI*2);
+    ctx.fillStyle = Math.sin(frame * 0.15) > 0 ? CY : CD; ctx.fill();
+    ctx.beginPath(); ctx.arc( 5,-17,2.2,0,Math.PI*2);
+    ctx.fillStyle = Math.sin(frame * 0.15 + Math.PI) > 0 ? CY : CD; ctx.fill();
+
+    ctx.restore();
+
+    /* ── Body glow ── */
+    if (alive) {
+      const grd = ctx.createRadialGradient(0, 0, 6, 0, 0, 42);
+      grd.addColorStop(0, 'rgba(0,255,224,0.07)');
+      grd.addColorStop(1, 'rgba(0,255,224,0)');
+      ctx.beginPath(); ctx.arc(0, 0, 42, 0, Math.PI * 2);
+      ctx.fillStyle = grd; ctx.fill();
+    }
+
+    ctx.restore();
+  }
+
+  /* ─── Main loop ─── */
+  function tick() {
+    frame++;
+
+    if (moved) {
+      const dx = mx - rx, dy = my - ry;
+      vx += dx * 0.06; vy += dy * 0.06;
+      vx *= 0.72;      vy *= 0.72;
+      rx += vx;        ry += vy;
+
+      speed = Math.sqrt(vx*vx + vy*vy);
+      walkPhase += speed * 0.14;
+
+      const dist = Math.sqrt(dx*dx + dy*dy);
+      if (dist > 3) targetAngle = Math.atan2(dy, dx) + Math.PI / 2;
+      angle = lerpAngle(angle, targetAngle, 0.1);
+    }
+
+    updateTrail();
+
+    drawBg();
+    drawTether();
+    drawTrail();
+    drawReticle();
+
+    if (moved) drawRobot(rx, ry, angle, walkPhase, speed);
+
+    // HUD update
+    hStatus.textContent = moved ? (speed > 1 ? 'ACTIVE' : 'TRACKING') : 'STANDBY';
+    hPos.textContent    = moved ? `${Math.round(rx)}, ${Math.round(ry)}` : '---';
+    hSpd.textContent    = Math.round(speed);
+    hLeg.textContent    = speed > 2 ? 'RUNNING' : speed > 0.5 ? 'WALKING' : 'IDLE';
+
+    requestAnimationFrame(tick);
+  }
+
+  tick();
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Portfolio — Front-end Developer</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Mono:ital,wght@0,300;0,400;0,500;1,300&family=Syne:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="style.css"/>
+</head>
+<body>
+
+  <!-- Robot canvas (background layer) -->
+  <canvas id="robot-canvas"></canvas>
+
+  <!-- Navigation -->
+  <nav id="nav">
+    <div class="nav-logo">
+      <span class="nav-bracket">[</span>
+      <span id="nav-name">William Mcbauer</span>
+      <span class="nav-bracket">]</span>
+    </div>
+    <ul class="nav-links">
+      <li><a href="#about">sobre</a></li>
+      <li><a href="#skills">skills</a></li>
+      <li><a href="#projects">projetos</a></li>
+      <li><a href="#contact">contato</a></li>
+    </ul>
+    <div class="nav-status">
+      <span class="status-dot"></span>
+      <span>disponível</span>
+    </div>
+  </nav>
+
+  <!-- Hero -->
+  <section id="hero">
+    <div class="hero-inner">
+      <p class="hero-eyebrow"><span class="mono">01 /</span> apresentação</p>
+      <h1 class="hero-title">
+        <span class="line">WILLIAM</span>
+        <span class="line accent">MCBAUER</span>
+      </h1>
+      <p class="hero-role">Front-end Developer</p>
+      <p class="hero-bio">
+        Sou desenvolvedor Front-End focado na criação de interfaces modernas, responsivas e funcionais. Trabalho com HTML, CSS, JavaScript, React e Node.js, desenvolvendo aplicações com atenção à performance, experiência do usuário e qualidade visual. Busco transformar ideias em projetos intuitivos, organizados e eficientes, sempre priorizando um resultado profissional e alinhado às necessidades de cada cliente.
+      </p>
+      <div class="hero-cta">
+        <a href="#projects" class="btn-primary">ver projetos</a>
+        <a href="#contact" class="btn-ghost">entrar em contato</a>
+      </div>
+    </div>
+    <div class="hero-deco">
+      <div class="deco-ring ring-1"></div>
+      <div class="deco-ring ring-2"></div>
+      <div class="deco-ring ring-3"></div>
+      <div class="deco-code">
+        <span>&lt;dev&gt;</span>
+        <span class="indent">craft = precisão + estética</span>
+        <span>&lt;/dev&gt;</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- About -->
+  <section id="about">
+    <div class="section-label"><span class="mono">02 /</span> sobre</div>
+    <div class="about-grid">
+      <div class="about-text">
+        <h2>Quem sou eu</h2>
+        <p>
+          Sempre tive interesse pela área tecnológica, o que me levou a iniciar minha trajetória na programação há cerca de 2 anos. Desde então, venho estudando, evoluindo minhas habilidades e desenvolvendo projetos próprios voltados para aplicações web modernas, buscando criar interfaces cada vez mais funcionais, organizadas e intuitivas.
+        </p>
+        <p>
+          Você pode falar sobre sua forma de trabalhar, sua atenção a detalhes de UI/UX, performance, acessibilidade, ou qualquer aspecto que queira destacar.
+        </p>
+        <div class="about-stats">
+          
+          
+        </div>
+      </div>
+      <div class="about-aside">
+        <div class="info-card">
+          <div class="info-row">
+            <span class="info-key">localização</span>
+            <span class="info-val">São Paulo, BR</span>
+          </div>
+          <div class="info-row">
+            <span class="info-key">foco</span>
+            <span class="info-val">Front-end</span>
+          </div>
+          <div class="info-row">
+            <span class="info-key">disponibilidade</span>
+            <span class="info-val">freelance / CLT</span>
+          </div>
+          <div class="info-row">
+            <span class="info-key">idiomas</span>
+            <span class="info-val">PT · EN</span>
+          </div>
+          <div class="info-divider"></div>
+          <div class="info-row">
+            <span class="info-key">github</span>
+            <a href="https://github.com/wmcbauer" class="info-link">github.com/wmcbauer</a>
+          </div>
+          <div class="info-row">
+            <span class="info-key">linkedin</span>
+            <a href="https://www.linkedin.com/in/william-mcbauer-firmino-fernandes/" class="info-link">linkedin.com/in/william-mcbauer-firmino-fernandes</a>
+          </div>
+          <div class="info-row">
+            <span class="info-key">email</span>
+            <a href="mailto:mcbauer_@live.com" class="info-link">mcbauer_@live.com</a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Skills -->
+  <section id="skills">
+    <div class="section-label"><span class="mono">03 /</span> skills</div>
+    <h2>Tecnologias & ferramentas</h2>
+    <div class="skills-grid">
+
+      <div class="skill-group">
+        <p class="skill-group-title">Linguagens</p>
+        <div class="skill-tags">
+          <span class="tag">HTML5</span>
+          <span class="tag">CSS3</span>
+          <span class="tag">JavaScript</span>
+          <span class="tag">TypeScript</span>
+        </div>
+      </div>
+
+      <div class="skill-group">
+        <p class="skill-group-title">Frameworks & libs</p>
+        <div class="skill-tags">
+          <span class="tag">React</span>
+          <span class="tag">Next.js</span>
+          <span class="tag">Vue</span>
+          <span class="tag">Tailwind CSS</span>
+          <span class="tag">GSAP</span>
+        </div>
+      </div>
+
+      <div class="skill-group">
+        <p class="skill-group-title">Ferramentas</p>
+        <div class="skill-tags">
+          <span class="tag">Git</span>
+          <span class="tag">Figma</span>
+          <span class="tag">Vite</span>
+          <span class="tag">Webpack</span>
+          <span class="tag">VS Code</span>
+        </div>
+      </div>
+
+      <div class="skill-group">
+        <p class="skill-group-title">Outras áreas</p>
+        <div class="skill-tags">
+          <span class="tag">UI / UX</span>
+          <span class="tag">Responsivo</span>
+          <span class="tag">Acessibilidade</span>
+          <span class="tag">SEO</span>
+          <span class="tag">Performance</span>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- Projects -->
+  <section id="projects">
+    <div class="section-label"><span class="mono">04 /</span> projetos</div>
+    <h2>Sites & landing pages</h2>
+    <div class="projects-grid">
+
+      <!-- Project card — replicate as needed -->
+      <article class="project-card">
+        <div class="project-thumb">
+          <div class="thumb-placeholder">
+            <span><img src="/img/spotify img.png" alt=""></span>
+          </div>
+          <div class="project-overlay">
+            <a href="https://mmmusics.netlify.app/" class="overlay-link">ver site ↗</a>
+            <a href="https://github.com/wmcbauer/spotify" class="overlay-link">código ↗</a>
+          </div>
+        </div>
+        <div class="project-info">
+          <div class="project-header">
+            <h3>Nome do Projeto</h3>
+            <span class="project-year">2024</span>
+          </div>
+          <p class="project-desc">
+            Descreva brevemente o projeto — o que é, qual problema resolve, e qual foi seu papel no desenvolvimento.
+          </p>
+          <div class="project-tags">
+            <span class="tag-sm">React</span>
+            <span class="tag-sm">Tailwind</span>
+            <span class="tag-sm">Next.js</span>
+          </div>
+        </div>
+      </article>
+
+      <article class="project-card">
+        <div class="project-thumb">
+          <div class="thumb-placeholder">
+            <span><img src="/img/store img.png" alt=""></span>
+          </div>
+          <div class="project-overlay">
+            <a href="https://sssstore.netlify.app/" class="overlay-link">ver site ↗</a>
+            <a href="https://github.com/wmcbauer/store" class="overlay-link">código ↗</a>
+          </div>
+        </div>
+        <div class="project-info">
+          <div class="project-header">
+            <h3>Nome do Projeto</h3>
+            <span class="project-year">2024</span>
+          </div>
+          <p class="project-desc">
+            Descreva brevemente o projeto — o que é, qual problema resolve, e qual foi seu papel no desenvolvimento.
+          </p>
+          <div class="project-tags">
+            <span class="tag-sm">HTML</span>
+            <span class="tag-sm">CSS</span>
+            <span class="tag-sm">GSAP</span>
+          </div>
+        </div>
+      </article>
+
+      <article class="project-card">
+        <div class="project-thumb">
+          <div class="thumb-placeholder">
+            <span><img src="/img/devmovie img.png" alt=""></span>
+          </div>
+          <div class="project-overlay">
+            <a href="https://spectacular-creponne-12e949.netlify.app/" class="overlay-link">ver site ↗</a>
+            <a href="https://github.com/wmcbauer/dev-movie" class="overlay-link">código ↗</a>
+          </div>
+        </div>
+        <div class="project-info">
+          <div class="project-header">
+            <h3>Nome do Projeto</h3>
+            <span class="project-year">2023</span>
+          </div>
+          <p class="project-desc">
+            Descreva brevemente o projeto — o que é, qual problema resolve, e qual foi seu papel no desenvolvimento.
+          </p>
+          <div class="project-tags">
+            <span class="tag-sm">Vue</span>
+            <span class="tag-sm">TypeScript</span>
+          </div>
+        </div>
+      </article>
+
+    </div>
+  </section>
+
+  <!-- Contact -->
+  <section id="contact">
+    <div class="section-label"><span class="mono">05 /</span> contato</div>
+    <div class="contact-inner">
+      <h2>Vamos trabalhar juntos?</h2>
+      <p class="contact-sub">
+        Estou aberto a projetos freelance, oportunidades CLT e colaborações. Me manda uma mensagem.
+      </p>
+      <a href="https://wa.me/qr/M4HDB5BNKGMTI1" class="contact-email">
+        (13)98818-2061
+        
+      </a>
+      <div class="contact-social">
+        <a href="https://github.com/wmcbauer" class="social-link">GitHub</a>
+        <span class="social-sep">/</span>
+        <a href="https://www.linkedin.com/in/william-mcbauer-firmino-fernandes/?skipRedirect=true" class="social-link">LinkedIn</a>
+      </div>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer id="footer">
+    <span class="mono">© William McBauer</span>
+    <span class="mono">front-end developer</span>
+  </footer>
+
+  
+  <script src="robot.js"></script>
+  <script src="main.js"></script>
+  <script src="particles.js"></script>
+  <script src="effects.js"></script>
+
+</body>
+</html>
