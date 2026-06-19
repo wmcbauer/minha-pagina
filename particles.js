@@ -1,7 +1,5 @@
 (function () {
 
-  // Desativa em mobile/touch
-  if ('ontouchstart' in window || navigator.maxTouchPoints > 0) return;
 
   var cv = document.createElement('canvas');
   cv.id  = 'particles-canvas';
