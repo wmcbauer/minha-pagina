@@ -1,15 +1,20 @@
-/* ── Variables ── */
+/* ── Variables (paleta da logo WMC Tech: azul + prata metálico) ── */
 :root {
-  --bg:        #060a12;
-  --bg2:       #0b1120;
-  --bg3:       #111928;
-  --border:    rgba(99, 145, 210, 0.12);
-  --border-hi: rgba(99, 145, 210, 0.28);
+  --bg:        #050810;
+  --bg2:       #0b101c;
+  --bg3:       #101828;
+  --border:    rgba(122, 179, 232, 0.12);
+  --border-hi: rgba(122, 179, 232, 0.3);
   --blue:      #4a8fd4;
-  --blue-hi:   #7ab3e8;
+  --blue-hi:   #8fc3f0;
   --blue-dim:  rgba(74, 143, 212, 0.15);
-  --white:     #e8edf5;
-  --muted:     #6b7a96;
+  --silver-light: #eef2f6;
+  --silver:    #9aa7b8;
+  --silver-dark: #5b6675;
+  --gradient:  linear-gradient(135deg, #8fc3f0 0%, #4a8fd4 55%, #235a91 100%);
+  --gradient-metal: linear-gradient(135deg, #eef2f6 0%, #aab4c2 55%, #5b6675 100%);
+  --white:     #eef2f6;
+  --muted:     #7c8ba3;
   --mono:      'DM Mono', monospace;
   --sans:      'Syne', sans-serif;
 }
@@ -19,14 +24,15 @@
 
 html {
   scroll-behavior: smooth;
-  background: #060a12;
+  background: var(--bg);
   max-width: 100%;
   overflow-x: hidden;
 }
 
 body {
-  background: #060a12;
+  background: var(--bg);
   color: var(--white);
+  position: relative;
 
   font-size: 16px;
   line-height: 1.7;
@@ -46,6 +52,57 @@ img { display: block; max-width: 100%; }
 #footer {
   position: relative;
   z-index: 10;
+}
+
+/* ── Blobs de fundo (glow ambiente, mesma identidade do site principal) ── */
+#bg-blobs {
+  position: fixed;
+  inset: 0;
+  z-index: 1;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.blob {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(90px);
+  opacity: 0.3;
+  mix-blend-mode: screen;
+  will-change: transform;
+}
+
+.blob1 {
+  width: 46vw; height: 46vw;
+  top: -10%; left: -10%;
+  background: var(--blue);
+  animation: blobFloat1 22s ease-in-out infinite;
+}
+.blob2 {
+  width: 38vw; height: 38vw;
+  top: 30%; right: -12%;
+  background: var(--blue-hi);
+  animation: blobFloat2 26s ease-in-out infinite;
+}
+.blob3 {
+  width: 34vw; height: 34vw;
+  bottom: -10%; left: 20%;
+  background: var(--silver);
+  opacity: 0.15;
+  animation: blobFloat3 30s ease-in-out infinite;
+}
+
+@keyframes blobFloat1 {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  50%      { transform: translate(6vw, 8vh) scale(1.1); }
+}
+@keyframes blobFloat2 {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  50%      { transform: translate(-7vw, -6vh) scale(1.08); }
+}
+@keyframes blobFloat3 {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  50%      { transform: translate(5vw, -5vh) scale(1.05); }
 }
 
 .project-card, .skill-group, .info-card {
@@ -97,7 +154,7 @@ section h2 {
   align-items: center;
   justify-content: space-between;
   padding: 1.1rem 2.5rem;
-  background: rgba(6, 10, 18, 0.8);
+  background: rgba(5, 8, 16, 0.8);
   backdrop-filter: blur(12px);
   border-bottom: 1px solid var(--border);
 }
@@ -173,8 +230,19 @@ section h2 {
   letter-spacing: -0.03em;
   margin-bottom: 1rem;
 }
-.hero-title .line { display: block; }
-.hero-title .accent { color: var(--blue-hi); }
+.hero-title .line {
+  display: block;
+  background: var(--gradient);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+.hero-title .accent {
+  background: var(--gradient-metal);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
 
 .hero-role {
   font-family: var(--mono);
@@ -430,7 +498,7 @@ section h2 {
 .project-overlay {
   position: absolute;
   inset: 0;
-  background: rgba(6, 10, 18, 0.88);
+  background: rgba(5, 8, 16, 0.88);
   display: flex;
   align-items: center;
   justify-content: center;
