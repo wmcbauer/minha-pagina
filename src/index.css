@@ -116,7 +116,7 @@ img { display: block; max-width: 100%; }
 }
 
 /* ── Modo 3D ── */
-.experience-3d, .experience-3d canvas {
+.experience-3d {
   position: fixed;
   inset: 0;
   width: 100%;
@@ -128,8 +128,39 @@ img { display: block; max-width: 100%; }
   align-items: center;
 }
 .page-3d .scene {
+  width: 100%;
   min-height: 100vh;
   pointer-events: auto;
+}
+
+/* Nas cenas com "placa" 3D, o texto fica ao lado dela — não em cima. */
+.page-3d--side .scene {
+  max-width: none;
+  flex-direction: row;
+  align-items: center;
+  justify-content: flex-end;
+}
+.page-3d--side .scene-inner {
+  max-width: 440px;
+  width: 100%;
+  max-height: calc(100vh - 6rem);
+  overflow-y: auto;
+  text-align: left;
+  /* se o conteúdo for mais alto que a tela, rola dentro do próprio painel
+     em vez de vazar/sobrepor a cena seguinte */
+  scrollbar-width: thin;
+}
+.page-3d--side .contact-inner {
+  text-align: left;
+  margin: 0;
+}
+
+@media (max-width: 880px) {
+  .page-3d--side .scene { justify-content: center; }
+  .page-3d--side .scene-inner { max-width: 520px; text-align: center; }
+  .page-3d--side .contact-inner { text-align: center; }
+  .page-3d--side .section-label { justify-content: center; }
+  .page-3d--side .diferencial { text-align: left; }
 }
 
 /* ── HERO ── */

@@ -14,10 +14,16 @@ export function useDeviceTier(): DeviceTier {
     const nav = navigator as Navigator & { deviceMemory?: number };
     const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     const narrowViewport = window.matchMedia('(max-width: 768px)').matches;
-    const lowMemory = typeof nav.deviceMemory === 'number' && nav.deviceMemory <= 4;
-    const lowCores = (navigator.hardwareConcurrency ?? 4) <= 4;
 
-    const isLow = reducedMotion || narrowViewport || lowMemory || lowCores;
+    // navigator.deviceMemory/hardwareConcurrency não existem em todo navegador
+    // (ex: Firefox, Safari) — nesse caso, não penaliza, assume capaz.
+    // Só marca "fraco" por hardware se memória E núcleos forem baixos ao mesmo
+    // tempo (sinal fraco isolado não é confiável o bastante sozinho).
+    const cores = navigator.hardwareConcurrency ?? 8;
+    const memory = nav.deviceMemory;
+    const weakHardware = cores <= 2 && typeof memory === 'number' && memory <= 2;
+
+    const isLow = reducedMotion || narrowViewport || weakHardware;
     setTier(isLow ? 'low' : 'high');
   }, []);
 

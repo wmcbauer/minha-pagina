@@ -42,13 +42,13 @@ export default function Experience3D() {
           <ScrollControls pages={SCENE_NODES.length} damping={0.25}>
             <ScrollElCapture onReady={(el) => { scrollElRef.current = el; }} />
             <ChipScene />
-            <Scroll html style={{ width: '100%' }}>
-              <div className="page-3d"><Hero tier="low" onScrollNext={advanceOnePage} /></div>
-              <div className="page-3d"><About /></div>
-              <div className="page-3d"><Services /></div>
-              <div className="page-3d"><Process /></div>
-              <div className="page-3d"><Projects /></div>
-              <div className="page-3d"><Contact /></div>
+            <Scroll html style={{ width: '100%', position: 'relative', zIndex: 1 }}>
+              <div className="page-3d page-3d--hero"><Hero tier="low" onScrollNext={advanceOnePage} /></div>
+              <div className="page-3d page-3d--side"><About /></div>
+              <div className="page-3d page-3d--side"><Services /></div>
+              <div className="page-3d page-3d--side"><Process /></div>
+              <div className="page-3d page-3d--side"><Projects /></div>
+              <div className="page-3d page-3d--side"><Contact /></div>
             </Scroll>
           </ScrollControls>
         </Suspense>

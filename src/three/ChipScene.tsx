@@ -12,8 +12,11 @@ function CameraRig() {
 
   useFrame((state) => {
     const segCount = SCENE_NODES.length - 1;
-    const f = scroll.offset * segCount;
-    const i = Math.min(segCount - 1, Math.floor(f));
+    // scroll.offset pode vir NaN nos primeiros frames, antes do drei medir o
+    // layout de scroll — sem essa guarda, o índice vira NaN e quebra tudo.
+    const offset = Number.isFinite(scroll.offset) ? THREE.MathUtils.clamp(scroll.offset, 0, 1) : 0;
+    const f = offset * segCount;
+    const i = Math.min(segCount - 1, Math.max(0, Math.floor(f)));
     const t = THREE.MathUtils.smoothstep(f - i, 0, 1);
     const a = SCENE_NODES[i];
     const b = SCENE_NODES[i + 1];
@@ -78,7 +81,8 @@ function ScreenNode({ index }: { index: number }) {
 
   useFrame(() => {
     if (!matRef.current) return;
-    const dist = Math.abs(scroll.offset - targetOffset) * segCount;
+    const offset = Number.isFinite(scroll.offset) ? scroll.offset : 0;
+    const dist = Math.abs(offset - targetOffset) * segCount;
     const intensity = THREE.MathUtils.clamp(1 - dist, 0.08, 1) * 1.6;
     matRef.current.emissiveIntensity = THREE.MathUtils.lerp(matRef.current.emissiveIntensity, intensity, 0.1);
   });
