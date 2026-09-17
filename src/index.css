@@ -39,165 +39,62 @@ a { color: inherit; text-decoration: none; }
 button { font: inherit; color: inherit; background: none; border: none; cursor: pointer; }
 img { display: block; max-width: 100%; }
 
-.app-shell {
-  position: relative;
-  height: 100%;
-}
-
-/* ── Blobs de fundo ── */
-.bg-blobs {
-  position: fixed;
-  inset: 0;
-  z-index: 0;
-  overflow: hidden;
-  pointer-events: none;
-}
-.blob {
-  position: absolute;
-  border-radius: 50%;
-  filter: blur(90px);
-  opacity: 0.32;
-  mix-blend-mode: screen;
-}
-.bg-blobs--low .blob { filter: blur(50px); opacity: 0.2; animation: none !important; }
-
-.blob1 { width: 46vw; height: 46vw; top: -10%; left: -10%; background: var(--blue); animation: blobFloat1 22s ease-in-out infinite; }
-.blob2 { width: 38vw; height: 38vw; top: 30%; right: -12%; background: var(--blue-light); animation: blobFloat2 26s ease-in-out infinite; }
-.blob3 { width: 34vw; height: 34vw; bottom: -10%; left: 20%; background: var(--silver); opacity: 0.16; animation: blobFloat3 30s ease-in-out infinite; }
-
-@keyframes blobFloat1 { 0%, 100% { transform: translate(0,0) scale(1); } 50% { transform: translate(6vw,8vh) scale(1.1); } }
-@keyframes blobFloat2 { 0%, 100% { transform: translate(0,0) scale(1); } 50% { transform: translate(-7vw,-6vh) scale(1.08); } }
-@keyframes blobFloat3 { 0%, 100% { transform: translate(0,0) scale(1); } 50% { transform: translate(5vw,-5vh) scale(1.05); } }
-
-/* ── Scroll de cenas ── */
-.scenes-wrap {
-  position: relative;
-  z-index: 1;
-  height: 100%;
-  overflow-y: auto;
-  overflow-x: hidden;
-  scroll-snap-type: y mandatory;
-  -webkit-overflow-scrolling: touch;
-}
-
-.scene {
-  position: relative;
-  min-height: 100dvh;
-  scroll-snap-align: start;
-  scroll-snap-stop: always;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  padding: 7rem 2rem;
-  max-width: 1100px;
-  margin: 0 auto;
-}
-
-/* Efeito de profundidade (modo leve): cada cena "entra" quando ativa.
-   Por padrão o conteúdo fica visível — só dentro de `.scenes-wrap` (modo CSS)
-   é que ele nasce escondido e some/aparece junto do IntersectionObserver. */
-.scene-inner {
-  width: 100%;
-  opacity: 1;
-  transform: none;
-  transition: opacity 0.75s cubic-bezier(0.16, 1, 0.3, 1), transform 0.75s cubic-bezier(0.16, 1, 0.3, 1);
-}
-.scenes-wrap .scene-inner {
-  opacity: 0;
-  transform: translateY(46px) scale(0.94);
-}
-.scenes-wrap .scene.is-active .scene-inner {
-  opacity: 1;
-  transform: translateY(0) scale(1);
-}
-[data-tier="low"] .scenes-wrap .scene-inner {
-  transition-duration: 0.4s;
-  transform: translateY(20px) scale(0.98);
-}
-
-/* ── Modo 3D ── */
+/* ── Cena 3D (única experiência do site) ── */
 .experience-3d {
   position: fixed;
   inset: 0;
   width: 100%;
   height: 100%;
 }
-.page-3d {
-  width: 100%;
-  display: flex;
-  align-items: center;
-}
-.page-3d .scene {
-  width: 100%;
-  min-height: 100vh;
-  pointer-events: auto;
-}
 
-/* Nas cenas com "placa" 3D, o texto fica ao lado dela — não em cima. */
-.page-3d--side .scene {
-  max-width: none;
-  flex-direction: row;
-  align-items: center;
-  justify-content: flex-end;
-}
-.page-3d--side .scene-inner {
-  max-width: 440px;
-  width: 100%;
-  max-height: calc(100vh - 6rem);
-  overflow-y: auto;
-  text-align: left;
-  /* se o conteúdo for mais alto que a tela, rola dentro do próprio painel
-     em vez de vazar/sobrepor a cena seguinte */
-  scrollbar-width: thin;
-}
-.page-3d--side .contact-inner {
-  text-align: left;
-  margin: 0;
-}
-
-@media (max-width: 880px) {
-  .page-3d--side .scene { justify-content: center; }
-  .page-3d--side .scene-inner { max-width: 520px; text-align: center; }
-  .page-3d--side .contact-inner { text-align: center; }
-  .page-3d--side .section-label { justify-content: center; }
-  .page-3d--side .diferencial { text-align: left; }
-}
-
-/* ── HERO ── */
-.scene-hero {
-  padding: 0;
-  max-width: none;
-  align-items: center;
-  text-align: center;
-  overflow: hidden;
-}
-
-.hero-video {
-  position: absolute;
+/*
+ * Hero — elemento HTML comum, fora do Canvas: tela cheia de verdade.
+ * `pointer-events: none` pra não bloquear o scroll do que está por baixo;
+ * só o botão "role para explorar" reativa o clique.
+ */
+.hero-overlay-wrap {
+  position: fixed;
   inset: 0;
   width: 100%;
   height: 100%;
-  object-fit: cover;
-  opacity: 0.5;
-  -webkit-mask-image: linear-gradient(to bottom, rgba(0,0,0,1) 0%, rgba(0,0,0,0.6) 55%, rgba(0,0,0,0) 100%);
-  mask-image: linear-gradient(to bottom, rgba(0,0,0,1) 0%, rgba(0,0,0,0.6) 55%, rgba(0,0,0,0) 100%);
+  z-index: 5;
+  pointer-events: none;
+  will-change: transform, opacity;
+  transition: transform 0.12s linear;
+}
+
+.scene-hero {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
 }
 
 .hero-overlay {
   position: absolute;
   inset: 0;
-  background:
-    radial-gradient(ellipse at 30% 20%, rgba(74,143,212,0.25) 0%, transparent 55%),
-    radial-gradient(ellipse at 75% 60%, rgba(143,195,240,0.15) 0%, transparent 55%),
-    linear-gradient(to bottom, rgba(5,8,16,0.2) 0%, rgba(5,8,16,0.6) 55%, rgba(5,8,16,1) 100%);
+  /* mesma cor de fundo escura e neutra da parte das telas — sem o véu azulado
+     que deixava o hero visivelmente mais claro que o resto da cena */
+  background: var(--bg);
 }
 
 .hero-inner {
   position: relative;
-  padding: 0 1.5rem;
   display: flex;
   flex-direction: column;
   align-items: center;
+  padding: 0 1.5rem;
+}
+
+/* retângulo invisível em volta da logo — sem borda nem fundo, só define de
+   onde o feixe de energia sai (a borda de baixo dele) */
+.hero-logo-frame {
+  display: inline-flex;
+  padding: 1.4rem 2rem;
 }
 
 .hero-logo-img {
@@ -221,6 +118,7 @@ img { display: block; max-width: 100%; }
   flex-direction: column;
   align-items: center;
   gap: 8px;
+  pointer-events: auto;
 }
 .scroll-hint span:first-child {
   font-family: var(--mono);
@@ -236,242 +134,160 @@ img { display: block; max-width: 100%; }
   box-shadow: 0 0 8px rgba(74,143,212,0.6);
   animation: arrowPulse 1.8s ease-in-out infinite;
 }
-[data-tier="low"] .scroll-hint .arrow { animation: none; opacity: 0.6; }
 
 @keyframes arrowPulse {
   0%, 100% { opacity: 0.3; transform: scaleY(1) translateY(0); }
   50%       { opacity: 1;   transform: scaleY(1.3) translateY(4px); }
 }
 
-/* ── Seções (texto comum) ── */
+/*
+ * Apresentação — entre o Hero e as telas, câmera parada (mesma posição do
+ * hero). Overlay 2D comum, igual ao hero. Os três blocos ficam empilhados
+ * no MESMO lugar da tela (position: absolute) e se revezam um de cada vez,
+ * vindo de baixo — puro 2D, sem mexer na profundidade/câmera.
+ */
+.presentation {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 4;
+  pointer-events: none;
+  /* mesmo fundo sólido do hero — cobre a cena 3D atrás enquanto os textos
+     estão em foco, só volta a mostrar as telas quando a apresentação some */
+  background: var(--bg);
+}
+
+.presentation-block {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 1.5rem;
+  text-align: center;
+  opacity: 0;
+  will-change: transform, opacity;
+}
+
+/*
+ * Retângulo em volta de cada texto — mesma linguagem visual das telas 3D
+ * (painel com borda fina). A borda é "desenhada" progressivamente pelas 4
+ * tiras (.pres-edge-*) e o ponto brilhante (.pres-card-runner) corre na
+ * ponta do traço, dando a sensação de energia contornando o retângulo.
+ */
+.pres-card {
+  position: relative;
+  max-width: 620px;
+  padding: 2.2rem 2.4rem;
+  border: 1px solid rgba(122, 179, 232, 0.16);
+  background: rgba(122, 179, 232, 0.035);
+}
+
+.pres-edge {
+  position: absolute;
+  pointer-events: none;
+  box-shadow: 0 0 8px rgba(143, 195, 240, 0.75);
+}
+.pres-edge-top,
+.pres-edge-bottom {
+  height: 2px;
+  width: 0%;
+  background: linear-gradient(90deg, rgba(143, 195, 240, 0.9), #ffffff);
+}
+.pres-edge-left,
+.pres-edge-right {
+  width: 2px;
+  height: 0%;
+  background: linear-gradient(180deg, rgba(143, 195, 240, 0.9), #ffffff);
+}
+.pres-edge-top { top: -1px; left: -1px; }
+.pres-edge-right { top: -1px; right: -1px; }
+.pres-edge-bottom { bottom: -1px; right: -1px; }
+.pres-edge-left { bottom: -1px; left: -1px; }
+
+.pres-card-runner {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: radial-gradient(circle, #ffffff 0%, #bfe3ff 45%, rgba(143, 195, 240, 0) 75%);
+  box-shadow: 0 0 14px 5px rgba(143, 195, 240, 0.85);
+  pointer-events: none;
+  opacity: 0;
+  will-change: transform, opacity;
+}
+
+.presentation-text {
+  font-size: 1.05rem;
+  line-height: 1.8;
+  color: var(--white);
+}
+
+.presentation-text--cta {
+  font-family: var(--mono);
+  font-size: 0.9rem;
+  letter-spacing: 0.03em;
+  color: var(--blue-light);
+}
+
 .section-label {
   font-family: var(--mono);
   font-size: 0.72rem;
   color: var(--blue-light);
   letter-spacing: 0.1em;
   text-transform: uppercase;
-  margin-bottom: 2rem;
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-}
-.section-label::after {
-  content: '';
-  flex: 1;
-  max-width: 80px;
-  height: 1px;
-  background: var(--gradient);
-  opacity: 0.6;
+  margin-bottom: 0.9rem;
 }
 
-.section-title {
-  font-family: var(--sans);
-  font-size: clamp(1.8rem, 4vw, 3rem);
-  font-weight: 800;
-  letter-spacing: -0.02em;
-  line-height: 1.15;
-  margin-bottom: 1.5rem;
-}
-.section-title span {
-  background: var(--gradient-metal);
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
-}
-
-.section-desc {
-  font-size: 0.95rem;
-  color: var(--muted);
-  line-height: 1.85;
-  max-width: 560px;
-}
-
-/* ── Sobre ── */
-.diferenciais {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 1.5rem;
-  margin-top: 2.5rem;
-}
-.diferencial {
-  border-left: 2px solid var(--border-hi);
-  padding-left: 1rem;
-}
-.diferencial h3 {
-  font-size: 0.95rem;
-  font-weight: 700;
-  margin-bottom: 0.4rem;
-}
-.diferencial p {
-  font-size: 0.82rem;
-  color: var(--muted);
-  line-height: 1.7;
+/*
+ * Feixe de energia 2D — sai de onde a logo estava e desce até o primeiro
+ * texto, imitando o mesmo feixe usado entre as telas 3D (linha fina +
+ * núcleo brilhante), só que em HTML/CSS porque a cena 3D fica escondida
+ * atrás do fundo sólido durante a apresentação.
+ */
+.pres-beam-line {
+  position: fixed;
+  left: 50%;
+  top: 28vh;
+  height: 22vh;
+  width: 2px;
+  transform: translateX(-50%);
+  background: linear-gradient(to bottom, rgba(143, 195, 240, 0), rgba(143, 195, 240, 0.8) 65%, #ffffff 100%);
+  box-shadow: 0 0 8px rgba(143, 195, 240, 0.5);
+  pointer-events: none;
+  z-index: 6;
+  opacity: 0;
+  will-change: opacity;
 }
 
-.stack-row {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.5rem;
-  margin-top: 2.5rem;
-}
-.stack-tag {
-  font-family: var(--mono);
-  font-size: 0.72rem;
-  color: var(--blue-light);
-  background: var(--gradient-soft);
-  border: 1px solid rgba(74,143,212,0.3);
-  padding: 0.3rem 0.7rem;
-  letter-spacing: 0.04em;
-  border-radius: 3px;
+.pres-beam-core {
+  position: fixed;
+  left: 50%;
+  top: 28vh;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: radial-gradient(circle, #ffffff 0%, #bfe3ff 45%, rgba(143, 195, 240, 0) 75%);
+  box-shadow: 0 0 18px 6px rgba(143, 195, 240, 0.85);
+  pointer-events: none;
+  z-index: 6;
+  opacity: 0;
+  will-change: transform, opacity, top;
 }
 
-/* ── CARDS (serviços) ── */
-.cards {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-  gap: 1.5rem;
-  margin-top: 2.5rem;
-}
-.card {
-  border: 1px solid var(--border);
-  border-radius: 4px;
-  padding: 1.6rem;
-  background: linear-gradient(160deg, var(--bg2), var(--bg3));
-  transition: border-color 0.3s, transform 0.25s, box-shadow 0.3s;
-}
-.card:hover {
-  border-color: var(--border-hi);
-  transform: translateY(-4px);
-  box-shadow: 0 16px 40px rgba(74,143,212,0.22), 0 8px 24px rgba(143,195,240,0.12);
-}
-.card-icon {
-  width: 40px; height: 40px;
-  border-radius: 4px;
-  background: var(--gradient-soft);
-  border: 1px solid rgba(74,143,212,0.35);
-  display: flex; align-items: center; justify-content: center;
-  margin-bottom: 1.1rem;
-  font-size: 1.05rem;
-}
-.card h3 { font-size: 1rem; font-weight: 700; margin-bottom: 0.5rem; }
-.card p { font-size: 0.83rem; color: var(--muted); line-height: 1.7; }
-
-/* ── PROCESSO ── */
-.steps {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-  gap: 2rem;
-  margin-top: 2.5rem;
-}
-.step {
-  border-top: 2px solid var(--border-hi);
-  padding-top: 1rem;
-}
-.step-n {
-  display: block;
-  font-family: var(--mono);
-  font-size: 0.8rem;
-  background: var(--gradient);
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
-  margin-bottom: 0.6rem;
-}
-.step h3 { font-size: 0.95rem; font-weight: 700; margin-bottom: 0.4rem; }
-.step p { font-size: 0.82rem; color: var(--muted); line-height: 1.7; }
-
-/* ── PROJETOS ── */
-.projects-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-  gap: 1.75rem;
-  margin-top: 2.5rem;
-}
-.project-card {
-  background: var(--bg2);
-  border: 1px solid var(--border);
-  border-radius: 4px;
-  overflow: hidden;
-  transition: border-color 0.25s, transform 0.25s;
-}
-.project-card:hover { border-color: var(--border-hi); transform: translateY(-4px); }
-
-.project-thumb { position: relative; aspect-ratio: 16/9; overflow: hidden; background: var(--bg3); }
-.project-thumb img { width: 100%; height: 100%; object-fit: cover; }
-.project-overlay {
-  position: absolute; inset: 0;
-  background: rgba(5,8,16,0.88);
-  display: flex; align-items: center; justify-content: center; gap: 1.2rem;
-  opacity: 0; transition: opacity 0.25s;
-}
-.project-card:hover .project-overlay { opacity: 1; }
-.project-overlay a {
-  font-family: var(--mono); font-size: 0.72rem;
-  color: var(--blue-light); border: 1px solid var(--blue-light);
-  padding: 0.45rem 0.9rem; letter-spacing: 0.05em;
-  transition: background 0.2s, color 0.2s;
-}
-.project-overlay a:hover { background: var(--blue); color: var(--bg); border-color: var(--blue); }
-
-.project-info { padding: 1.1rem 1.3rem 1.3rem; }
-.project-header { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 0.5rem; }
-.project-header h3 { font-size: 0.95rem; font-weight: 700; }
-.project-year { font-family: var(--mono); font-size: 0.68rem; color: var(--muted); }
-.project-info p { font-size: 0.8rem; color: var(--muted); line-height: 1.65; margin-bottom: 0.9rem; }
-.project-tags { display: flex; flex-wrap: wrap; gap: 0.4rem; }
-.project-tags span {
-  font-family: var(--mono); font-size: 0.63rem; color: var(--blue-light);
-  background: var(--gradient-soft); border: 1px solid rgba(74,143,212,0.25);
-  padding: 0.2rem 0.55rem; letter-spacing: 0.03em;
-}
-
-/* ── CONTATO ── */
-.contact-inner { text-align: center; margin: 0 auto; }
-.contact-inner h2 {
-  font-family: var(--sans);
-  font-size: clamp(1.5rem, 3vw, 2.5rem);
-  font-weight: 800;
-  margin-bottom: 1rem;
-}
-.contact-inner > p {
-  color: var(--muted);
-  margin-bottom: 2.2rem;
-}
-.btn {
-  display: inline-block;
-  padding: 0.9rem 2.6rem;
-  background: var(--gradient);
-  color: #06101c;
-  font-family: var(--mono);
-  font-weight: 500;
-  font-size: 0.78rem;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  border-radius: 3px;
-  box-shadow: 0 8px 30px rgba(74,143,212,0.4);
-  transition: box-shadow 0.25s, transform 0.25s, filter 0.25s;
-}
-.btn:hover { filter: brightness(1.1); box-shadow: 0 10px 40px rgba(143,195,240,0.5); transform: translateY(-2px); }
-
-.contact-social {
-  display: flex; align-items: center; justify-content: center; gap: 1rem;
-  font-family: var(--mono); font-size: 0.78rem; color: var(--muted);
-  margin-top: 2.2rem;
-}
-.contact-social a { transition: color 0.2s; }
-.contact-social a:hover { color: var(--white); }
-
-.contact-inner footer {
-  margin-top: 3.5rem;
-  font-family: var(--mono);
-  font-size: 0.68rem;
-  color: var(--muted);
-  letter-spacing: 0.06em;
-}
-
-/* ── Responsivo ── */
-@media (max-width: 720px) {
-  .scene { padding: 5.5rem 1.25rem; }
-  .scene-nav { right: 0.9rem; }
-  .scene-dot-label { display: none; }
+.pres-beam-flash {
+  position: fixed;
+  left: 50%;
+  top: 50vh;
+  width: 280px;
+  height: 280px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(191, 227, 255, 0.85) 0%, rgba(143, 195, 240, 0.3) 45%, rgba(143, 195, 240, 0) 75%);
+  pointer-events: none;
+  z-index: 6;
+  opacity: 0;
+  will-change: transform, opacity;
 }

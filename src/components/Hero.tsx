@@ -1,18 +1,21 @@
-import type { DeviceTier } from '../hooks/useDeviceTier';
+import type { RefObject } from 'react';
 
-export default function Hero({ tier, onScrollNext }: { tier: DeviceTier; onScrollNext: () => void }) {
-  const showVideo = tier === 'high';
-
+export default function Hero({
+  onScrollNext,
+  logoFrameRef,
+}: {
+  onScrollNext: () => void;
+  logoFrameRef?: RefObject<HTMLDivElement>;
+}) {
   return (
-    <section id="hero" className="scene scene-hero">
-      {showVideo && (
-        <video className="hero-video" autoPlay muted loop playsInline poster="/assets/logo.png">
-          <source src="/assets/bg-video.mp4" type="video/mp4" />
-        </video>
-      )}
+    <section id="hero" className="scene-hero">
       <div className="hero-overlay" />
-      <div className="scene-inner hero-inner">
-        <img className="hero-logo-img" src="/assets/logo.png" alt="WMC Tech" width={620} height={620} />
+      <div className="hero-inner">
+        {/* retângulo invisível em volta da logo — só serve de referência pra
+            saber de onde o feixe de energia sai, não aparece na tela */}
+        <div ref={logoFrameRef} className="hero-logo-frame">
+          <img className="hero-logo-img" src="/assets/logo.png" alt="WMC Tech" width={909} height={327} />
+        </div>
         <p className="hero-sub">Soluções web sob medida para o seu negócio vender e crescer mais.</p>
         <button type="button" className="scroll-hint" onClick={onScrollNext}>
           <span>role para explorar</span>

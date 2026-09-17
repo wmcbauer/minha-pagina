@@ -4,6 +4,35 @@ import { useScroll, QuadraticBezierLine, Points, PointMaterial } from '@react-th
 import * as THREE from 'three';
 import { SCENE_NODES } from './nodesConfig';
 
+/** Mesmo ângulo das telas — o texto acompanha essa inclinação. */
+const NODE_ROTATION_Y = Math.PI / 6;
+
+/**
+ * Textura de brilho com gradiente radial (borda suave de verdade, não uma
+ * esfera geométrica com bloom por cima) — gerada uma única vez via canvas e
+ * reaproveitada em todos os feixes, igual à técnica usada em cenas 3D de
+ * referência pra esse tipo de brilho suave sempre de frente pra câmera.
+ */
+const GLOW_TEXTURE = (() => {
+  if (typeof document === 'undefined') return null;
+  const size = 128;
+  const canvas = document.createElement('canvas');
+  canvas.width = size;
+  canvas.height = size;
+  const ctx = canvas.getContext('2d');
+  if (!ctx) return null;
+  const gradient = ctx.createRadialGradient(size / 2, size / 2, 0, size / 2, size / 2, size / 2);
+  gradient.addColorStop(0, 'rgba(255,255,255,1)');
+  gradient.addColorStop(0.25, 'rgba(255,255,255,0.85)');
+  gradient.addColorStop(0.55, 'rgba(255,255,255,0.18)');
+  gradient.addColorStop(1, 'rgba(255,255,255,0)');
+  ctx.fillStyle = gradient;
+  ctx.fillRect(0, 0, size, size);
+  const texture = new THREE.CanvasTexture(canvas);
+  texture.needsUpdate = true;
+  return texture;
+})();
+
 /** Câmera viaja pelo espaço 3D seguindo o offset de scroll (0 → 1). */
 function CameraRig() {
   const scroll = useScroll();
@@ -34,43 +63,6 @@ function CameraRig() {
   return null;
 }
 
-/** O chip central — origem de tudo, no hero. */
-function Chip() {
-  const ref = useRef<THREE.Group>(null);
-  const dots = useMemo(() => {
-    const pts: [number, number, number][] = [];
-    for (let x = -1; x <= 1; x += 0.5) {
-      for (let y = -1; y <= 1; y += 0.5) {
-        pts.push([x * 0.6, y * 0.6, 0.06]);
-      }
-    }
-    return pts;
-  }, []);
-
-  useFrame((state) => {
-    if (ref.current) ref.current.rotation.y = Math.sin(state.clock.elapsedTime * 0.15) * 0.15;
-  });
-
-  return (
-    <group ref={ref}>
-      <mesh>
-        <boxGeometry args={[1.6, 1.6, 0.12]} />
-        <meshStandardMaterial color="#101828" emissive="#4a8fd4" emissiveIntensity={0.25} metalness={0.6} roughness={0.35} />
-      </mesh>
-      <lineSegments>
-        <edgesGeometry args={[new THREE.BoxGeometry(1.6, 1.6, 0.12)]} />
-        <lineBasicMaterial color="#8fc3f0" />
-      </lineSegments>
-      {dots.map((p, i) => (
-        <mesh key={i} position={p}>
-          <sphereGeometry args={[0.035, 8, 8]} />
-          <meshStandardMaterial color="#8fc3f0" emissive="#8fc3f0" emissiveIntensity={1.4} />
-        </mesh>
-      ))}
-    </group>
-  );
-}
-
 /** Uma "tela" que acende conforme o scroll se aproxima dela. */
 function ScreenNode({ index }: { index: number }) {
   const node = SCENE_NODES[index];
@@ -91,7 +83,7 @@ function ScreenNode({ index }: { index: number }) {
 
   return (
     <group position={node.position}>
-      <mesh rotation={[0, Math.PI / 6, 0]}>
+      <mesh rotation={[0, NODE_ROTATION_Y, 0]}>
         <planeGeometry args={[1.5, 0.95]} />
         <meshStandardMaterial
           ref={matRef}
@@ -103,7 +95,7 @@ function ScreenNode({ index }: { index: number }) {
           roughness={0.4}
         />
       </mesh>
-      <lineSegments rotation={[0, Math.PI / 6, 0]}>
+      <lineSegments rotation={[0, NODE_ROTATION_Y, 0]}>
         <edgesGeometry args={[new THREE.PlaneGeometry(1.5, 0.95)]} />
         <lineBasicMaterial color={node.color} />
       </lineSegments>
@@ -111,7 +103,38 @@ function ScreenNode({ index }: { index: number }) {
   );
 }
 
-/** Trilha curva do chip (ou nó anterior) até o nó, com uma partícula fluindo continuamente. */
+/**
+ * Trilha curva do chip (ou nó anterior) até o nó — o feixe viaja de acordo
+ * com o scroll. A cauda é um tubo que segue exatamente a curva (não uma
+ * linha reta ao lado dela) e afunila até sumir na ponta mais antiga.
+ */
+const UP_AXIS = new THREE.Vector3(0, 1, 0);
+
+// quanto da curva (em unidades de t, 0–1) a cauda cobre atrás da cabeça
+const TAIL_T_SPAN = 0.42;
+const TUBULAR_SEGMENTS = 20;
+const RADIAL_SEGMENTS = 6;
+const HEAD_RADIUS = 0.012;
+
+/** Cria a geometria do tubo uma única vez (posições são reescritas todo frame). */
+function useTailGeometry() {
+  return useMemo(() => {
+    const geo = new THREE.BufferGeometry();
+    const vertCount = (TUBULAR_SEGMENTS + 1) * (RADIAL_SEGMENTS + 1);
+    geo.setAttribute('position', new THREE.BufferAttribute(new Float32Array(vertCount * 3), 3));
+    const indices: number[] = [];
+    for (let i = 0; i < TUBULAR_SEGMENTS; i++) {
+      for (let j = 0; j < RADIAL_SEGMENTS; j++) {
+        const a = i * (RADIAL_SEGMENTS + 1) + j;
+        const b = a + RADIAL_SEGMENTS + 1;
+        indices.push(a, b, a + 1, b, b + 1, a + 1);
+      }
+    }
+    geo.setIndex(indices);
+    return geo;
+  }, []);
+}
+
 function DataTrail({ index }: { index: number }) {
   const from = SCENE_NODES[index - 1]?.position ?? new THREE.Vector3(0, 0, 0);
   const to = SCENE_NODES[index].position!;
@@ -120,24 +143,149 @@ function DataTrail({ index }: { index: number }) {
     [from, to],
   );
   const curve = useMemo(() => new THREE.QuadraticBezierCurve3(from, mid, to), [from, mid, to]);
-  const particleRef = useRef<THREE.Mesh>(null);
-  const speed = 0.12;
-  const phase = index * 0.37;
+  const headRef = useRef<THREE.Group>(null);
+  const tailGeo = useTailGeometry();
+  const tailMatRef = useRef<THREE.MeshBasicMaterial>(null);
+  const haloMatRef = useRef<THREE.SpriteMaterial>(null);
+  const coreMatRef = useRef<THREE.MeshBasicMaterial>(null);
+  const coreMeshRef = useRef<THREE.Mesh>(null);
+  const pointLightRef = useRef<THREE.PointLight>(null);
+  const tangent = useMemo(() => new THREE.Vector3(), []);
+  const point = useMemo(() => new THREE.Vector3(), []);
+  const normal = useMemo(() => new THREE.Vector3(), []);
+  const binormal = useMemo(() => new THREE.Vector3(), []);
+  const scroll = useScroll();
+  const segCount = SCENE_NODES.length - 1;
+  // este trecho da viagem começa quando a cena anterior está ativa e termina
+  // quando o scroll chega na cena de destino (index) — o feixe "chega" na
+  // tela exatamente quando ela vira a cena atual.
+  const segStart = (index - 1) / segCount;
+  const segLen = 1 / segCount;
+
+  // acompanham o movimento do scroll pra saber pra que lado e o quanto o
+  // rastro deve aparecer
+  const prevOffsetRef = useRef(0);
+  const directionRef = useRef(1);
+  const velocityRef = useRef(0);
 
   useFrame((state) => {
-    if (!particleRef.current) return;
-    const t = (state.clock.elapsedTime * speed + phase) % 1;
-    const p = curve.getPointAt(t);
-    particleRef.current.position.copy(p);
+    const offset = Number.isFinite(scroll.offset) ? scroll.offset : 0;
+    const t = THREE.MathUtils.clamp((offset - segStart) / segLen, 0, 1);
+
+    // detecta sentido e velocidade do scroll — o rastro só aparece se movendo,
+    // e aponta pro lado contrário de pra onde o scroll está indo
+    const rawDelta = offset - prevOffsetRef.current;
+    prevOffsetRef.current = offset;
+    if (Math.abs(rawDelta) > 0.00005) directionRef.current = Math.sign(rawDelta);
+    const targetVelocity = THREE.MathUtils.clamp(Math.abs(rawDelta) * 400, 0, 1);
+    // sobe quase instantâneo até o brilho máximo assim que começa a rolar
+    velocityRef.current = THREE.MathUtils.lerp(velocityRef.current, targetVelocity, targetVelocity > velocityRef.current ? 0.9 : 0.1);
+    const dir = directionRef.current;
+
+    // só esse trecho conta como "em foco" — os outros feixes ficam invisíveis
+    // mesmo rolando, em vez de todos reagirem ao mesmo tempo
+    const rawT = (offset - segStart) / segLen;
+    const outsideSeg = Math.max(0, -rawT, rawT - 1);
+    const segFactor = THREE.MathUtils.clamp(1 - outsideSeg * 8, 0, 1);
+    const activeVelocity = velocityRef.current * segFactor;
+
+    // cabeça — núcleo + halo, presos exatamente na curva
+    if (headRef.current) {
+      curve.getPointAt(t, point);
+      curve.getTangentAt(Math.max(t, 0.001), tangent).normalize();
+      headRef.current.position.copy(point);
+      headRef.current.quaternion.setFromUnitVectors(UP_AXIS, tangent);
+
+      // piscada de brilho rápida e meio errática (tipo elétrica), só forte
+      // durante o scroll — combina duas frequências + ruído pra não ficar um
+      // sino perfeitinho, mais "vivo"
+      const et = state.clock.elapsedTime;
+      const noise = Math.sin(et * 47 + index * 9.1) * Math.sin(et * 23 + index * 3.7);
+
+      const brightBoost = 1 + activeVelocity * 1.4 + Math.max(0, noise) * activeVelocity * 1.2;
+      if (haloMatRef.current) haloMatRef.current.color.setScalar(brightBoost);
+      if (coreMatRef.current) coreMatRef.current.color.setScalar(brightBoost);
+
+      // pulsação de tamanho da esfera — pequena, suave, só durante o scroll,
+      // separada do brilho: dá a sensação de energia passando pulsando
+      if (coreMeshRef.current) {
+        const sizePulse = 1 + Math.sin(et * 16 + index * 2.3) * 0.22 * activeVelocity;
+        coreMeshRef.current.scale.setScalar(sizePulse);
+      }
+
+      // luz de verdade viajando junto com o feixe — ilumina o chip e as
+      // telas por perto, fazendo eles reagirem/piscarem conforme ela passa,
+      // dando a sensação de energia correndo pelo ambiente (não só um brilho
+      // parado no próprio ponto)
+      if (pointLightRef.current) {
+        pointLightRef.current.intensity = activeVelocity * (1.6 + Math.max(0, noise) * 2.2);
+      }
+    }
+
+    // cauda — tubo desenhado em cima da própria curva, afunilando até 0 na
+    // ponta antiga; estica pro lado oposto ao sentido do scroll atual
+    const pos = tailGeo.attributes.position.array as Float32Array;
+    for (let i = 0; i <= TUBULAR_SEGMENTS; i++) {
+      const frac = i / TUBULAR_SEGMENTS; // 0 = ponta antiga (sumindo), 1 = cabeça
+      const tt = THREE.MathUtils.clamp(t - dir * TAIL_T_SPAN * (1 - frac), 0, 1);
+      curve.getPointAt(tt, point);
+      curve.getTangentAt(Math.max(tt, 0.001), tangent).normalize();
+      normal.set(0, 1, 0);
+      if (Math.abs(tangent.dot(normal)) > 0.9) normal.set(1, 0, 0);
+      binormal.crossVectors(tangent, normal).normalize();
+      normal.crossVectors(binormal, tangent).normalize();
+      const radius = HEAD_RADIUS * frac * frac; // afunila rápido — some perto da ponta antiga
+      for (let j = 0; j <= RADIAL_SEGMENTS; j++) {
+        const angle = (j / RADIAL_SEGMENTS) * Math.PI * 2;
+        const cx = Math.cos(angle) * radius;
+        const cy = Math.sin(angle) * radius;
+        const idx = (i * (RADIAL_SEGMENTS + 1) + j) * 3;
+        pos[idx] = point.x + normal.x * cx + binormal.x * cy;
+        pos[idx + 1] = point.y + normal.y * cx + binormal.y * cy;
+        pos[idx + 2] = point.z + normal.z * cx + binormal.z * cy;
+      }
+    }
+    tailGeo.attributes.position.needsUpdate = true;
+    tailGeo.computeBoundingSphere();
+
+    // rastro só fica visível enquanto o scroll está se movendo NESSE trecho —
+    // e brilha mais forte quanto mais rápido o scroll (cor acima de 1 pra
+    // empurrar o bloom)
+    if (tailMatRef.current) {
+      tailMatRef.current.opacity = activeVelocity;
+      const boost = 1 + activeVelocity * 1.6;
+      tailMatRef.current.color.setScalar(boost);
+    }
   });
 
   return (
     <>
-      <QuadraticBezierLine start={from} end={to} mid={mid} color="#4a8fd4" lineWidth={1} transparent opacity={0.35} />
-      <mesh ref={particleRef}>
-        <sphereGeometry args={[0.05, 8, 8]} />
-        <meshStandardMaterial color="#eef2f6" emissive="#8fc3f0" emissiveIntensity={2} />
+      <QuadraticBezierLine start={from} end={to} mid={mid} color="#5aa3e0" lineWidth={1} transparent opacity={0.22} toneMapped={false} />
+
+      {/* cauda — tubo colado na curva, afunilando até sumir, só visível em movimento */}
+      <mesh geometry={tailGeo}>
+        <meshBasicMaterial ref={tailMatRef} color="#ffffff" transparent opacity={0} blending={THREE.AdditiveBlending} depthWrite={false} toneMapped={false} side={THREE.DoubleSide} />
       </mesh>
+
+      <group ref={headRef}>
+        {/* halo — sprite com gradiente radial (borda suave de verdade), sempre
+            de frente pra câmera, bem menor que antes */}
+        {GLOW_TEXTURE && (
+          <sprite scale={[0.06, 0.06, 1]}>
+            <spriteMaterial ref={haloMatRef} map={GLOW_TEXTURE} color="#ffffff" transparent opacity={0.85} blending={THREE.AdditiveBlending} depthWrite={false} toneMapped={false} />
+          </sprite>
+        )}
+
+        {/* núcleo — só um pouco maior que a linha, pra se destacar sem virar bola */}
+        <mesh ref={coreMeshRef}>
+          <sphereGeometry args={[0.014, 12, 12]} />
+          <meshBasicMaterial ref={coreMatRef} color="#ffffff" transparent opacity={1} blending={THREE.AdditiveBlending} depthWrite={false} toneMapped={false} />
+        </mesh>
+
+        {/* luz de verdade que viaja com o feixe — ilumina o chip/telas por
+            perto, criando a sensação de energia passando pelo ambiente */}
+        <pointLight ref={pointLightRef} color="#bfe3ff" intensity={0} distance={4.5} decay={2} />
+      </group>
     </>
   );
 }
@@ -166,13 +314,15 @@ export default function ChipScene() {
     <>
       <CameraRig />
       <Starfield />
-      <Chip />
-      {SCENE_NODES.slice(1).map((n, i) => (
-        <group key={n.id}>
-          <ScreenNode index={i + 1} />
-          <DataTrail index={i + 1} />
-        </group>
-      ))}
+      {SCENE_NODES.map((n, index) => {
+        if (!n.position) return null; // hero e apresentação não têm tela — só a câmera passa por eles
+        return (
+          <group key={n.id}>
+            <ScreenNode index={index} />
+            <DataTrail index={index} />
+          </group>
+        );
+      })}
     </>
   );
 }
