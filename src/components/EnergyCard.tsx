@@ -5,6 +5,14 @@ export interface EnergyCardHandle {
    * canto superior esquerdo) e posiciona o "runner" brilhante na ponta do
    * traço — o mesmo efeito de energia correndo, só que em volta do retângulo. */
   setProgress: (p: number) => void;
+  /** elemento raiz do card — usado por quem precisa medir a posição dele na tela. */
+  getElement: () => HTMLDivElement | null;
+  /** 0→1: escurece o conteúdo do card (não a borda/runner) — usado pra dar a
+   * sensação de que o conteúdo está perdendo energia conforme ela sai dele. */
+  setContentBrightness?: (p: number) => void;
+  /** 0→1: esmaece o retângulo inteiro (borda, traço e runners inclusos) —
+   * usado enquanto a tela desliza pra fora, pra tudo sumir junto. */
+  setFade?: (p: number) => void;
 }
 
 const EnergyCard = forwardRef<EnergyCardHandle, { children: ReactNode; className?: string }>(
@@ -59,6 +67,9 @@ const EnergyCard = forwardRef<EnergyCardHandle, { children: ReactNode; className
           runnerRef.current.style.opacity = clamped > 0.001 && clamped < 0.999 ? '1' : '0';
           runnerRef.current.style.transform = `translate(${rx - 4}px, ${ry - 4}px)`;
         }
+      },
+      getElement() {
+        return cardRef.current;
       },
     }));
 

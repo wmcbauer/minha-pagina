@@ -60,7 +60,10 @@ img { display: block; max-width: 100%; }
   z-index: 5;
   pointer-events: none;
   will-change: transform, opacity;
-  transition: transform 0.12s linear;
+  /* sem transition: o próprio scroll já dá o movimento suave; uma transição
+     aqui atrasa o translateY em relação ao heroP calculado no JS, fazendo o
+     início do feixe (calculado instantâneo) se desalinhar da caixa em
+     scrolls rápidos, já que ela ainda está "alcançando" a posição */
 }
 
 .scene-hero {
@@ -90,13 +93,6 @@ img { display: block; max-width: 100%; }
   padding: 0 1.5rem;
 }
 
-/* retângulo invisível em volta da logo — sem borda nem fundo, só define de
-   onde o feixe de energia sai (a borda de baixo dele) */
-.hero-logo-frame {
-  display: inline-flex;
-  padding: 1.4rem 2rem;
-}
-
 .hero-logo-img {
   max-width: min(620px, 82vw);
   width: 100%;
@@ -112,39 +108,76 @@ img { display: block; max-width: 100%; }
   margin-top: 1rem;
 }
 
-.scroll-hint {
-  margin-top: 3.5rem;
+/* glow ambiente atrás da logo — bem sutil, só pra dar profundidade ao fundo
+   chapado do hero sem competir com o feixe de energia */
+.hero-glow {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: radial-gradient(ellipse 640px 520px at 50% 46%, rgba(74, 143, 212, 0.08), rgba(74, 143, 212, 0) 70%);
+}
+
+.hero-eyebrow {
+  font-family: var(--mono);
+  font-size: 0.68rem;
+  letter-spacing: 0.16em;
+  color: var(--muted);
+  text-transform: uppercase;
+  margin-bottom: 1.4rem;
+}
+
+.hero-support {
+  font-size: 0.9rem;
+  color: var(--silver);
+  text-align: center;
+  max-width: 30rem;
+  line-height: 1.65;
+  margin-top: 0.9rem;
+}
+
+.hero-badge {
+  margin-top: 1.4rem;
+  display: inline-flex;
+  align-items: center;
+  padding: 0.45rem 1rem;
+  border: 1px solid rgba(122, 179, 232, 0.28);
+  border-radius: 999px;
+  font-family: var(--mono);
+  font-size: 0.68rem;
+  letter-spacing: 0.06em;
+  color: var(--blue-light);
+}
+
+/* indicador discreto de scroll — sem texto/botão (o "role para explorar"
+   foi removido a pedido); só um traço + seta bem fracos, que somem junto
+   com o resto do hero assim que o scroll começa a empurrá-lo pra cima */
+.hero-scroll-cue {
+  position: absolute;
+  left: 50%;
+  bottom: 2.6rem;
+  transform: translateX(-50%);
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 8px;
-  pointer-events: auto;
-}
-.scroll-hint span:first-child {
-  font-family: var(--mono);
-  font-size: 0.68rem;
-  letter-spacing: 0.2em;
-  color: var(--muted);
-  text-transform: uppercase;
-}
-.scroll-hint .arrow {
-  width: 1px;
-  height: 22px;
-  background: var(--gradient);
-  box-shadow: 0 0 8px rgba(74,143,212,0.6);
-  animation: arrowPulse 1.8s ease-in-out infinite;
+  gap: 0.4rem;
+  color: var(--blue-light);
+  opacity: 0.5;
+  pointer-events: none;
 }
 
-@keyframes arrowPulse {
-  0%, 100% { opacity: 0.3; transform: scaleY(1) translateY(0); }
-  50%       { opacity: 1;   transform: scaleY(1.3) translateY(4px); }
+.hero-scroll-line {
+  width: 1px;
+  height: 28px;
+  background: linear-gradient(180deg, rgba(143, 195, 240, 0), currentColor);
 }
 
 /*
- * Apresentação — entre o Hero e as telas, câmera parada (mesma posição do
- * hero). Overlay 2D comum, igual ao hero. Os três blocos ficam empilhados
- * no MESMO lugar da tela (position: absolute) e se revezam um de cada vez,
- * vindo de baixo — puro 2D, sem mexer na profundidade/câmera.
+ * Apresentação — entre o Hero e as telas, câmera 3D parada (mesma posição
+ * do hero), mas o painel 2D tem sua PRÓPRIA "câmera": um mundo maior que a
+ * tela (.presentation-world), com um "slide" de 100vw×100vh pra cada texto,
+ * e o painel desliza (pan) de um pro outro acompanhando o feixe — dá a
+ * sensação de movimento pra direita/esquerda, e cada texto ocupa a tela
+ * quase inteira quando é a vez dele, em vez de dividir espaço com os outros.
  */
 .presentation {
   position: fixed;
@@ -153,21 +186,51 @@ img { display: block; max-width: 100%; }
   height: 100%;
   z-index: 4;
   pointer-events: none;
+  overflow: hidden;
   /* mesmo fundo sólido do hero — cobre a cena 3D atrás enquanto os textos
      estão em foco, só volta a mostrar as telas quando a apresentação some */
   background: var(--bg);
 }
 
-.presentation-block {
+.presentation-world {
   position: absolute;
   inset: 0;
+  will-change: transform;
+}
+
+.presentation-block {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 0 1.5rem;
+  padding: 0 4vw;
   text-align: center;
   opacity: 0;
-  will-change: transform, opacity;
+  will-change: opacity;
+}
+
+/* cada texto fica no seu próprio "slide" dentro do mundo — a câmera 2D
+   (.presentation-world) é quem pan pra cá quando é a vez de cada um; slide 2
+   fica à direita e um pouco pra baixo, slide 3 volta à esquerda e mais embaixo
+   ainda — é esse vai-e-volta que dá a sensação de movimento */
+.presentation-block--slide1 {
+  transform: translate(0, 0);
+}
+.presentation-block--slide2 {
+  transform: translate(100vw, 30vh);
+}
+.presentation-block--slide3 {
+  transform: translate(6vw, 62vh);
+}
+
+/* cards 2 e 3 ficam um pouco menores — evita que estourem a tela quando
+   deslocados pras pontas */
+.pres-card--compact {
+  max-width: 760px;
 }
 
 /*
@@ -178,10 +241,19 @@ img { display: block; max-width: 100%; }
  */
 .pres-card {
   position: relative;
-  max-width: 620px;
-  padding: 2.2rem 2.4rem;
+  max-width: 920px;
+  padding: 3.6rem 4rem;
   border: 1px solid rgba(122, 179, 232, 0.16);
-  background: rgba(122, 179, 232, 0.035);
+  /* um pouco mais de opacidade — suaviza a transição de tom entre o
+     interior do retângulo e o fundo escuro ao redor */
+  background: rgba(122, 179, 232, 0.07);
+}
+
+/* a logo usa o mesmo retângulo de energia dos textos — mesmo "plano" visual —
+   só maior, com mais respiro em volta da imagem e do subtítulo */
+.pres-card--logo {
+  max-width: 720px;
+  padding: 2.6rem 3.4rem;
 }
 
 .pres-edge {
@@ -205,6 +277,146 @@ img { display: block; max-width: 100%; }
 .pres-edge-right { top: -1px; right: -1px; }
 .pres-edge-bottom { bottom: -1px; right: -1px; }
 .pres-edge-left { bottom: -1px; left: -1px; }
+
+/*
+ * Bordas da logo — energia desce pelos dois lados (do topo pra baixo) e se
+ * junta no centro da base (as duas metades crescem em direção ao meio).
+ */
+.logo-edge {
+  position: absolute;
+  pointer-events: none;
+  box-shadow: 0 0 8px rgba(143, 195, 240, 0.75);
+  /* começa invisível — mesmo com 0% de altura/largura, o box-shadow ainda
+     desenha um pontinho no canto; só aparece quando o JS liga a opacidade,
+     ao primeiro scroll (setProgress com p > 0) */
+  opacity: 0;
+}
+/* o gradiente vai de transparente (na origem, onde a energia já "passou" e
+   se dissipou) até opaco (na ponta atual, onde a corrente está passando
+   agora) — como o traço cresce dinamicamente (height/width via JS), esse
+   degradê sempre se re-esticaca entre a origem fixa e a ponta em movimento */
+.logo-edge-left,
+.logo-edge-right {
+  top: -1px;
+  width: 2px;
+  height: 0%;
+  background: linear-gradient(180deg, rgba(143, 195, 240, 0), #ffffff);
+}
+.logo-edge-left { left: -1px; }
+.logo-edge-right { right: -1px; }
+.logo-edge-bottom-left,
+.logo-edge-bottom-right {
+  bottom: -1px;
+  height: 2px;
+  width: 0%;
+  background: linear-gradient(90deg, rgba(143, 195, 240, 0), #ffffff);
+}
+.logo-edge-bottom-left { left: -1px; }
+.logo-edge-bottom-right { right: -1px; background: linear-gradient(90deg, #ffffff, rgba(143, 195, 240, 0)); }
+
+/*
+ * Bordas do primeiro card de texto — a energia chega no meio do topo (onde
+ * o feixe pousa) e se divide em dois caminhos (um curto pela direita, um
+ * longo por esquerda/baixo) que se encontram no meio da borda direita, de
+ * onde a corrente segue pro próximo texto.
+ */
+.text-edge {
+  position: absolute;
+  pointer-events: none;
+  box-shadow: 0 0 8px rgba(143, 195, 240, 0.75);
+  opacity: 0;
+}
+.text-edge-top-right {
+  top: -1px;
+  left: 50%;
+  width: 0%;
+  height: 2px;
+  background: linear-gradient(90deg, rgba(143, 195, 240, 0), #ffffff);
+}
+.text-edge-right-top {
+  top: -1px;
+  right: -1px;
+  width: 2px;
+  height: 0%;
+  background: linear-gradient(180deg, rgba(143, 195, 240, 0), #ffffff);
+}
+.text-edge-top-left {
+  top: -1px;
+  right: 50%;
+  width: 0%;
+  height: 2px;
+  background: linear-gradient(90deg, #ffffff, rgba(143, 195, 240, 0));
+}
+.text-edge-left {
+  top: -1px;
+  left: -1px;
+  width: 2px;
+  height: 0%;
+  background: linear-gradient(180deg, rgba(143, 195, 240, 0), #ffffff);
+}
+.text-edge-bottom {
+  bottom: -1px;
+  left: -1px;
+  width: 0%;
+  height: 2px;
+  background: linear-gradient(90deg, rgba(143, 195, 240, 0), #ffffff);
+}
+.text-edge-right-bottom {
+  bottom: -1px;
+  right: -1px;
+  width: 2px;
+  height: 0%;
+  background: linear-gradient(180deg, #ffffff, rgba(143, 195, 240, 0));
+}
+
+/*
+ * Bordas do segundo card de texto — a energia chega no meio da esquerda
+ * (vindo do primeiro card) e se divide em dois caminhos (um curto por
+ * baixo, um longo por cima/direita) que se encontram no meio da borda de
+ * baixo, de onde a corrente segue em diagonal pro terceiro card.
+ */
+.text-edge-side-left-bottom {
+  top: 50%;
+  left: -1px;
+  width: 2px;
+  height: 0%;
+  background: linear-gradient(180deg, rgba(143, 195, 240, 0), #ffffff);
+}
+.text-edge-side-bottom-left {
+  bottom: -1px;
+  left: -1px;
+  width: 0%;
+  height: 2px;
+  background: linear-gradient(90deg, rgba(143, 195, 240, 0), #ffffff);
+}
+.text-edge-side-left-top {
+  bottom: 50%;
+  left: -1px;
+  width: 2px;
+  height: 0%;
+  background: linear-gradient(0deg, rgba(143, 195, 240, 0), #ffffff);
+}
+.text-edge-side-top {
+  top: -1px;
+  left: -1px;
+  width: 0%;
+  height: 2px;
+  background: linear-gradient(90deg, rgba(143, 195, 240, 0), #ffffff);
+}
+.text-edge-side-right {
+  top: -1px;
+  right: -1px;
+  width: 2px;
+  height: 0%;
+  background: linear-gradient(180deg, rgba(143, 195, 240, 0), #ffffff);
+}
+.text-edge-side-bottom-right {
+  bottom: -1px;
+  right: -1px;
+  width: 0%;
+  height: 2px;
+  background: linear-gradient(90deg, #ffffff, rgba(143, 195, 240, 0));
+}
 
 .pres-card-runner {
   position: absolute;
@@ -242,31 +454,110 @@ img { display: block; max-width: 100%; }
   margin-bottom: 0.9rem;
 }
 
+/* Card 1 — lista dos serviços, no lugar de um parágrafo corrido só */
+.pres-bullets {
+  list-style: none;
+  margin: 1.6rem 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.9rem;
+}
+.pres-bullets li {
+  display: flex;
+  gap: 0.8rem;
+  align-items: flex-start;
+}
+.pres-bullet-dot {
+  flex: 0 0 auto;
+  width: 6px;
+  height: 6px;
+  margin-top: 0.5rem;
+  background: var(--blue-light);
+  box-shadow: 0 0 8px rgba(143, 195, 240, 0.7);
+}
+.pres-bullet-title {
+  font-weight: 600;
+  font-size: 0.95rem;
+  color: var(--white);
+}
+.pres-bullet-desc {
+  font-family: var(--mono);
+  font-size: 0.78rem;
+  color: var(--silver);
+  margin-top: 0.2rem;
+  line-height: 1.5;
+}
+
+/* Card 2 — mini-indicadores qualitativos abaixo do texto de "quem somos" */
+.pres-tiles {
+  display: flex;
+  gap: 1.6rem;
+  margin-top: 1.8rem;
+  padding-top: 1.6rem;
+  border-top: 1px solid rgba(122, 179, 232, 0.14);
+}
+.pres-tile {
+  flex: 1;
+}
+.pres-tile-title {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--blue-light);
+}
+.pres-tile-desc {
+  font-family: var(--mono);
+  font-size: 0.68rem;
+  color: var(--silver);
+  letter-spacing: 0.02em;
+  margin-top: 0.3rem;
+  line-height: 1.4;
+}
+
+/* Card 3 — resumo final dos serviços, em forma de tags */
+.pres-tags {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.6rem;
+  margin-top: 1.4rem;
+}
+.pres-tag {
+  font-family: var(--mono);
+  font-size: 0.66rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--blue-light);
+  padding: 0.35rem 0.85rem;
+  border: 1px solid rgba(122, 179, 232, 0.25);
+}
+
 /*
- * Feixe de energia 2D — sai de onde a logo estava e desce até o primeiro
- * texto, imitando o mesmo feixe usado entre as telas 3D (linha fina +
- * núcleo brilhante), só que em HTML/CSS porque a cena 3D fica escondida
- * atrás do fundo sólido durante a apresentação.
+ * Feixe de energia 2D — genérico, funciona em qualquer ângulo (o vertical
+ * logo→texto1, o horizontal texto1→texto2, o diagonal texto2→texto3).
+ * A linha nasce em `left/top` (ponto de partida) e cresce em `width` no seu
+ * próprio referencial local (sempre "pra direita"); a rotação via
+ * `transform: rotate()` é que aponta ela na direção certa na tela.
  */
 .pres-beam-line {
   position: fixed;
-  left: 50%;
-  top: 28vh;
-  height: 22vh;
-  width: 2px;
-  transform: translateX(-50%);
-  background: linear-gradient(to bottom, rgba(143, 195, 240, 0), rgba(143, 195, 240, 0.8) 65%, #ffffff 100%);
+  left: 0;
+  top: 0;
+  height: 2px;
+  width: 0;
+  transform-origin: 0 50%;
+  background: linear-gradient(90deg, rgba(143, 195, 240, 0), rgba(143, 195, 240, 0.8) 65%, #ffffff 100%);
   box-shadow: 0 0 8px rgba(143, 195, 240, 0.5);
   pointer-events: none;
   z-index: 6;
   opacity: 0;
-  will-change: opacity;
+  will-change: opacity, transform, width;
 }
 
 .pres-beam-core {
   position: fixed;
-  left: 50%;
-  top: 28vh;
+  left: 0;
+  top: 0;
   width: 10px;
   height: 10px;
   border-radius: 50%;
@@ -275,13 +566,31 @@ img { display: block; max-width: 100%; }
   pointer-events: none;
   z-index: 6;
   opacity: 0;
-  will-change: transform, opacity, top;
+  will-change: transform, opacity;
+}
+
+/* ponto do feixe 4 — mesma aparência do .pres-beam-core, só menor, pra ficar
+   do mesmo tamanho do ponto de energia da parte das telas (a esfera+halo
+   pequenos do DataTrail em ChipScene.tsx), já que os dois se conectam */
+.pres-beam-core--tela {
+  position: fixed;
+  left: 0;
+  top: 0;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: radial-gradient(circle, #ffffff 0%, #bfe3ff 45%, rgba(143, 195, 240, 0) 75%);
+  box-shadow: 0 0 10px 3px rgba(143, 195, 240, 0.85);
+  pointer-events: none;
+  z-index: 6;
+  opacity: 0;
+  will-change: transform, opacity;
 }
 
 .pres-beam-flash {
   position: fixed;
-  left: 50%;
-  top: 50vh;
+  left: 0;
+  top: 0;
   width: 280px;
   height: 280px;
   border-radius: 50%;
@@ -290,4 +599,29 @@ img { display: block; max-width: 100%; }
   z-index: 6;
   opacity: 0;
   will-change: transform, opacity;
+}
+
+/* feixe 4 (texto 3 → telas) — só esse é curvo (Bézier quadrática via SVG,
+   com pathLength="1" pra animar o traçado em unidades normalizadas 0–1 sem
+   precisar calcular o comprimento real da curva) */
+.pres-beam-svg {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 6;
+  overflow: visible;
+}
+.pres-beam-curve {
+  fill: none;
+  /* gradiente com posição recalculada a cada frame (via ref, ver
+     Experience3D.tsx) — transparente na cauda antiga, opaco perto do ponto,
+     igual às linhas retas (.pres-beam-line) e à cauda da trilha 3D */
+  stroke: url(#beam4TailGradient);
+  stroke-width: 2;
+  stroke-linecap: round;
+  filter: drop-shadow(0 0 6px rgba(143, 195, 240, 0.6));
+  opacity: 0;
+  will-change: opacity;
 }

@@ -34,6 +34,12 @@ export const SCENE_NODES: SceneNode[] = [
     id: 'apresentacao', position: null, camPos: V(0, 0.4, 7), lookAt: V(0, 0, 0), color: '#8fc3f0',
   },
   {
+    // segundo "nó vazio" só pra dar mais espaço de scroll pra apresentação
+    // (junção da logo, feixe, textos) — sem isso ela ficava espremida em
+    // pouquíssimo scroll comparado às outras cenas, parecendo bagunçada
+    id: 'apresentacao-fim', position: null, camPos: V(0, 0.4, 7), lookAt: V(0, 0, 0), color: '#8fc3f0',
+  },
+  {
     id: 'sobre', position: V(-2.6, 1.1, -6), camPos: V(-1.1, 0.9, -1.5), lookAt: V(-2.6, 1.1, -6), color: '#8fc3f0',
     panel: {
       eyebrow: 'Quem somos',

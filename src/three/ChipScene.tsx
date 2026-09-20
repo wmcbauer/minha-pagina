@@ -1,6 +1,6 @@
 import { useMemo, useRef } from 'react';
 import { useFrame } from '@react-three/fiber';
-import { useScroll, QuadraticBezierLine, Points, PointMaterial } from '@react-three/drei';
+import { useScroll, Points, PointMaterial } from '@react-three/drei';
 import * as THREE from 'three';
 import { SCENE_NODES } from './nodesConfig';
 
@@ -63,11 +63,18 @@ function CameraRig() {
   return null;
 }
 
-/** Uma "tela" que acende conforme o scroll se aproxima dela. */
+// quão antes da chegada a tela começa a se revelar — só o instante final da
+// aproximação, não o trajeto inteiro (ela fica invisível até quase o ponto
+// de energia chegar nela)
+const REVEAL_WINDOW = 0.03;
+
+/** Uma "tela" que só aparece quando o ponto de energia chega nela, e
+ * continua acendendo mais conforme o scroll segue por perto. */
 function ScreenNode({ index }: { index: number }) {
   const node = SCENE_NODES[index];
   const scroll = useScroll();
   const matRef = useRef<THREE.MeshStandardMaterial>(null);
+  const edgeMatRef = useRef<THREE.LineBasicMaterial>(null);
   const segCount = SCENE_NODES.length - 1;
   const targetOffset = index / segCount;
 
@@ -77,6 +84,13 @@ function ScreenNode({ index }: { index: number }) {
     const dist = Math.abs(offset - targetOffset) * segCount;
     const intensity = THREE.MathUtils.clamp(1 - dist, 0.08, 1) * 1.6;
     matRef.current.emissiveIntensity = THREE.MathUtils.lerp(matRef.current.emissiveIntensity, intensity, 0.1);
+
+    // invisível até o ponto de energia chegar (offset alcança targetOffset)
+    // — revela suavemente só nesse instante final, não durante toda a
+    // aproximação
+    const appear = THREE.MathUtils.smoothstep(offset, targetOffset - REVEAL_WINDOW, targetOffset);
+    matRef.current.opacity = appear;
+    if (edgeMatRef.current) edgeMatRef.current.opacity = appear;
   });
 
   if (!node.position) return null;
@@ -93,11 +107,13 @@ function ScreenNode({ index }: { index: number }) {
           side={THREE.DoubleSide}
           metalness={0.4}
           roughness={0.4}
+          transparent
+          opacity={0}
         />
       </mesh>
       <lineSegments rotation={[0, NODE_ROTATION_Y, 0]}>
         <edgesGeometry args={[new THREE.PlaneGeometry(1.5, 0.95)]} />
-        <lineBasicMaterial color={node.color} />
+        <lineBasicMaterial ref={edgeMatRef} color={node.color} transparent opacity={0} />
       </lineSegments>
     </group>
   );
@@ -135,7 +151,48 @@ function useTailGeometry() {
   }, []);
 }
 
-function DataTrail({ index }: { index: number }) {
+/**
+ * Velocidade/direção do scroll — calculada UMA VEZ só (aqui), não uma vez
+ * por trilha. Antes, cada DataTrail tinha seu próprio prevOffsetRef/
+ * velocityRef independente; mesmo lendo o mesmo scroll.offset, cada um
+ * suavizava (lerp) esse valor separadamente, então bem na fronteira entre
+ * uma trilha terminando e a próxima começando os dois liam números
+ * ligeiramente diferentes — o suficiente pra "a energia sair" não
+ * acontecer exatamente junto com "a energia anterior chegar". Com uma
+ * fonte só, compartilhada via ref, todas as trilhas (e o handoff entre
+ * elas) leem o EXATO mesmo valor no mesmo frame.
+ */
+function ScrollVelocityTracker({
+  velocityRef,
+  directionRef,
+}: {
+  velocityRef: React.MutableRefObject<number>;
+  directionRef: React.MutableRefObject<number>;
+}) {
+  const scroll = useScroll();
+  const prevOffsetRef = useRef(0);
+
+  useFrame(() => {
+    const offset = Number.isFinite(scroll.offset) ? scroll.offset : 0;
+    const rawDelta = offset - prevOffsetRef.current;
+    prevOffsetRef.current = offset;
+    if (Math.abs(rawDelta) > 0.00005) directionRef.current = Math.sign(rawDelta);
+    const targetVelocity = THREE.MathUtils.clamp(Math.abs(rawDelta) * 400, 0, 1);
+    velocityRef.current = THREE.MathUtils.lerp(velocityRef.current, targetVelocity, targetVelocity > velocityRef.current ? 0.9 : 0.1);
+  });
+
+  return null;
+}
+
+function DataTrail({
+  index,
+  velocityRef,
+  directionRef,
+}: {
+  index: number;
+  velocityRef: React.MutableRefObject<number>;
+  directionRef: React.MutableRefObject<number>;
+}) {
   const from = SCENE_NODES[index - 1]?.position ?? new THREE.Vector3(0, 0, 0);
   const to = SCENE_NODES[index].position!;
   const mid = useMemo(
@@ -162,24 +219,9 @@ function DataTrail({ index }: { index: number }) {
   const segStart = (index - 1) / segCount;
   const segLen = 1 / segCount;
 
-  // acompanham o movimento do scroll pra saber pra que lado e o quanto o
-  // rastro deve aparecer
-  const prevOffsetRef = useRef(0);
-  const directionRef = useRef(1);
-  const velocityRef = useRef(0);
-
   useFrame((state) => {
     const offset = Number.isFinite(scroll.offset) ? scroll.offset : 0;
     const t = THREE.MathUtils.clamp((offset - segStart) / segLen, 0, 1);
-
-    // detecta sentido e velocidade do scroll — o rastro só aparece se movendo,
-    // e aponta pro lado contrário de pra onde o scroll está indo
-    const rawDelta = offset - prevOffsetRef.current;
-    prevOffsetRef.current = offset;
-    if (Math.abs(rawDelta) > 0.00005) directionRef.current = Math.sign(rawDelta);
-    const targetVelocity = THREE.MathUtils.clamp(Math.abs(rawDelta) * 400, 0, 1);
-    // sobe quase instantâneo até o brilho máximo assim que começa a rolar
-    velocityRef.current = THREE.MathUtils.lerp(velocityRef.current, targetVelocity, targetVelocity > velocityRef.current ? 0.9 : 0.1);
     const dir = directionRef.current;
 
     // só esse trecho conta como "em foco" — os outros feixes ficam invisíveis
@@ -202,14 +244,35 @@ function DataTrail({ index }: { index: number }) {
       const et = state.clock.elapsedTime;
       const noise = Math.sin(et * 47 + index * 9.1) * Math.sin(et * 23 + index * 3.7);
 
-      const brightBoost = 1 + activeVelocity * 1.4 + Math.max(0, noise) * activeVelocity * 1.2;
-      if (haloMatRef.current) haloMatRef.current.color.setScalar(brightBoost);
-      if (coreMatRef.current) coreMatRef.current.color.setScalar(brightBoost);
+      // mesmo comportamento do ponto que conecta a apresentação às telas
+      // (applyCurvedBeam em Experience3D.tsx): fica mais intenso conforme
+      // se aproxima do destino, como se estivesse carregando energia pra
+      // entregar — pros dois pontos (2D e 3D) parecerem exatamente a
+      // mesma coisa, só que em mundos diferentes
+      const approachGlow = 1 + t * t * 1.6;
+      const brightBoost = (1 + activeVelocity * 1.4 + Math.max(0, noise) * activeVelocity * 1.2) * approachGlow;
+      // o ponto (núcleo + halo) só existe DE VERDADE enquanto o scroll está
+      // rolando — sem piso, sem exceção. O piso que existia aqui foi um
+      // remendo pra disfarçar um delay entre trilhas que na verdade vinha de
+      // outro lugar (offset bruto vs. amortecido, já corrigido em
+      // Experience3D.tsx); agora que a causa raiz sumiu, todas as trilhas
+      // (2D e 3D) compartilham a MESMA velocidade a cada frame — uma pausa
+      // no meio do scroll apaga todo mundo igual, no mesmo instante, então
+      // não sobra vazio nem sobra ponto grudado sem motivo.
+      const headVisible = activeVelocity;
+      if (haloMatRef.current) {
+        haloMatRef.current.color.setScalar(brightBoost);
+        haloMatRef.current.opacity = 0.85 * headVisible;
+      }
+      if (coreMatRef.current) {
+        coreMatRef.current.color.setScalar(brightBoost);
+        coreMatRef.current.opacity = headVisible;
+      }
 
       // pulsação de tamanho da esfera — pequena, suave, só durante o scroll,
       // separada do brilho: dá a sensação de energia passando pulsando
       if (coreMeshRef.current) {
-        const sizePulse = 1 + Math.sin(et * 16 + index * 2.3) * 0.22 * activeVelocity;
+        const sizePulse = (1 + Math.sin(et * 16 + index * 2.3) * 0.22 * activeVelocity) * (1 + t * t * 0.35);
         coreMeshRef.current.scale.setScalar(sizePulse);
       }
 
@@ -260,8 +323,6 @@ function DataTrail({ index }: { index: number }) {
 
   return (
     <>
-      <QuadraticBezierLine start={from} end={to} mid={mid} color="#5aa3e0" lineWidth={1} transparent opacity={0.22} toneMapped={false} />
-
       {/* cauda — tubo colado na curva, afunilando até sumir, só visível em movimento */}
       <mesh geometry={tailGeo}>
         <meshBasicMaterial ref={tailMatRef} color="#ffffff" transparent opacity={0} blending={THREE.AdditiveBlending} depthWrite={false} toneMapped={false} side={THREE.DoubleSide} />
@@ -272,14 +333,14 @@ function DataTrail({ index }: { index: number }) {
             de frente pra câmera, bem menor que antes */}
         {GLOW_TEXTURE && (
           <sprite scale={[0.06, 0.06, 1]}>
-            <spriteMaterial ref={haloMatRef} map={GLOW_TEXTURE} color="#ffffff" transparent opacity={0.85} blending={THREE.AdditiveBlending} depthWrite={false} toneMapped={false} />
+            <spriteMaterial ref={haloMatRef} map={GLOW_TEXTURE} color="#ffffff" transparent opacity={0} blending={THREE.AdditiveBlending} depthWrite={false} toneMapped={false} />
           </sprite>
         )}
 
         {/* núcleo — só um pouco maior que a linha, pra se destacar sem virar bola */}
         <mesh ref={coreMeshRef}>
           <sphereGeometry args={[0.014, 12, 12]} />
-          <meshBasicMaterial ref={coreMatRef} color="#ffffff" transparent opacity={1} blending={THREE.AdditiveBlending} depthWrite={false} toneMapped={false} />
+          <meshBasicMaterial ref={coreMatRef} color="#ffffff" transparent opacity={0} blending={THREE.AdditiveBlending} depthWrite={false} toneMapped={false} />
         </mesh>
 
         {/* luz de verdade que viaja com o feixe — ilumina o chip/telas por
@@ -310,8 +371,16 @@ function Starfield() {
 }
 
 export default function ChipScene() {
+  // compartilhada entre TODAS as trilhas (ver ScrollVelocityTracker) — é
+  // isso que garante a energia de uma trilha sair exatamente no mesmo
+  // instante em que a anterior chega, sem depender de cada uma suavizar a
+  // própria velocidade separadamente
+  const velocityRef = useRef(0);
+  const directionRef = useRef(1);
+
   return (
     <>
+      <ScrollVelocityTracker velocityRef={velocityRef} directionRef={directionRef} />
       <CameraRig />
       <Starfield />
       {SCENE_NODES.map((n, index) => {
@@ -319,7 +388,7 @@ export default function ChipScene() {
         return (
           <group key={n.id}>
             <ScreenNode index={index} />
-            <DataTrail index={index} />
+            <DataTrail index={index} velocityRef={velocityRef} directionRef={directionRef} />
           </group>
         );
       })}
