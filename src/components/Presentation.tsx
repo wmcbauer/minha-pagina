@@ -2,6 +2,8 @@ import { type RefObject } from 'react';
 import EnergyCard, { type EnergyCardHandle } from './EnergyCard';
 import TextArrivalCard from './TextArrivalCard';
 import TextArrivalCardSide from './TextArrivalCardSide';
+import ScrambleText from './ScrambleText';
+import { useLanguage } from '../hooks/useLanguage';
 
 export interface PresentationBlockRefs {
   block: RefObject<HTMLDivElement>;
@@ -28,6 +30,8 @@ export default function Presentation({
   refs: PresentationRefs;
   worldRef?: RefObject<HTMLDivElement>;
 }) {
+  const { t } = useLanguage();
+
   return (
     <div className="presentation">
       {/* mundo 2D maior que a tela — o painel (Experience3D) faz um "pan"
@@ -40,38 +44,20 @@ export default function Presentation({
               meio do topo (onde o feixe pousa) e se encontra do lado direito,
               de onde ela vai seguir pro próximo texto */}
           <TextArrivalCard ref={refs.resumo.card}>
-            <p className="presentation-text">
-              A WMC Tech resolve todo tipo de necessidade digital do seu negócio:
-            </p>
+            <ScrambleText as="p" className="presentation-text" text={t.card1.intro} duration={620} />
             <ul className="pres-bullets">
-              <li>
-                <span className="pres-bullet-dot" />
-                <div>
-                  <div className="pres-bullet-title">Landpages &amp; Sites</div>
-                  <div className="pres-bullet-desc">Páginas rápidas e otimizadas pra converter.</div>
-                </div>
-              </li>
-              <li>
-                <span className="pres-bullet-dot" />
-                <div>
-                  <div className="pres-bullet-title">Criação de Sistemas</div>
-                  <div className="pres-bullet-desc">Painéis e plataformas sob medida.</div>
-                </div>
-              </li>
-              <li>
-                <span className="pres-bullet-dot" />
-                <div>
-                  <div className="pres-bullet-title">Automação com IA</div>
-                  <div className="pres-bullet-desc">Atendimento e fluxos inteligentes 24h.</div>
-                </div>
-              </li>
-              <li>
-                <span className="pres-bullet-dot" />
-                <div>
-                  <div className="pres-bullet-title">Integrações</div>
-                  <div className="pres-bullet-desc">Sistemas e canais num fluxo só.</div>
-                </div>
-              </li>
+              {/* chave por índice: a lista tem tamanho e ordem fixos nos três
+                  idiomas, só o texto muda — assim o item é atualizado no
+                  lugar e o ScrambleText anima a troca, em vez de remontar */}
+              {t.card1.bullets.map((bullet, i) => (
+                <li key={i}>
+                  <span className="pres-bullet-dot" />
+                  <div>
+                    <ScrambleText as="div" className="pres-bullet-title" text={bullet.title} duration={430} />
+                    <ScrambleText as="div" className="pres-bullet-desc" text={bullet.desc} duration={560} />
+                  </div>
+                </li>
+              ))}
             </ul>
           </TextArrivalCard>
         </div>
@@ -80,42 +66,26 @@ export default function Presentation({
           {/* segundo card: a energia chega pela esquerda (vinda do primeiro) e
               sai por baixo, seguindo em diagonal pro terceiro */}
           <TextArrivalCardSide ref={refs.quemSomos.card} className="pres-card--compact">
-            <div className="section-label">Quem somos</div>
-            <p className="presentation-text">
-              Somos uma equipe focada em tecnologia aplicada ao dia a dia de quem
-              empreende. Entendemos que nem todo mundo entende de programação — e
-              não precisa. Nosso trabalho é traduzir sua necessidade real (organizar
-              o caixa, atender mais rápido, vender mais) numa solução simples de
-              usar, sem enrolação técnica.
-            </p>
+            <ScrambleText as="div" className="section-label" text={t.card2.label} duration={430} />
+            <ScrambleText as="p" className="presentation-text" text={t.card2.paragraph} duration={700} />
             <div className="pres-tiles">
-              <div className="pres-tile">
-                <div className="pres-tile-title">Comunicação direta</div>
-                <div className="pres-tile-desc">Você fala com quem desenvolve</div>
-              </div>
-              <div className="pres-tile">
-                <div className="pres-tile-title">Sem enrolação técnica</div>
-                <div className="pres-tile-desc">Linguagem simples, do início ao fim</div>
-              </div>
-              <div className="pres-tile">
-                <div className="pres-tile-title">Suporte contínuo</div>
-                <div className="pres-tile-desc">Do ar ao pós-lançamento</div>
-              </div>
+              {t.card2.tiles.map((tile, i) => (
+                <div className="pres-tile" key={i}>
+                  <ScrambleText as="div" className="pres-tile-title" text={tile.title} duration={430} />
+                  <ScrambleText as="div" className="pres-tile-desc" text={tile.desc} duration={560} />
+                </div>
+              ))}
             </div>
           </TextArrivalCardSide>
         </div>
 
         <div ref={refs.transicao.block} className="presentation-block presentation-block--slide3">
           <EnergyCard ref={refs.transicao.card} className="pres-card--compact">
-            <p className="presentation-text presentation-text--cta">
-              Do site à automação, dá uma olhada em tudo que já resolvemos por aí — e
-              no que podemos resolver por você. Role pra conhecer.
-            </p>
+            <ScrambleText as="p" className="presentation-text presentation-text--cta" text={t.card3.cta} duration={700} />
             <div className="pres-tags">
-              <span className="pres-tag">Sites</span>
-              <span className="pres-tag">Sistemas</span>
-              <span className="pres-tag">Automação com IA</span>
-              <span className="pres-tag">Integrações</span>
+              {t.card3.tags.map((tag, i) => (
+                <ScrambleText as="span" className="pres-tag" key={i} text={tag} duration={430} />
+              ))}
             </div>
           </EnergyCard>
         </div>

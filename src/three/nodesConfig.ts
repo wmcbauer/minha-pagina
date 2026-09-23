@@ -1,16 +1,7 @@
 import * as THREE from 'three';
+import type { TelaKey } from '../i18n/translations';
 
-export interface PanelTopic {
-  title: string;
-  desc: string;
-}
-
-export interface PanelContent {
-  eyebrow: string;
-  heading: string;
-  topics: PanelTopic[];
-  cta?: { label: string; href: string };
-}
+export type PanelSide = 'left' | 'right' | 'center';
 
 export interface SceneNode {
   id: string;
@@ -19,10 +10,32 @@ export interface SceneNode {
   camPos: THREE.Vector3;
   lookAt: THREE.Vector3;
   color: string;
-  panel?: PanelContent;
+  /** chave do texto do painel ao lado da tela — o conteúdo em si mora em
+   * i18n/translations.ts (`telas`), pra acompanhar a troca de idioma */
+  panelKey?: TelaKey;
+  /** link do botão do painel, quando tem — fica aqui, e não na tradução,
+   * porque URL é a mesma nos três idiomas */
+  ctaHref?: string;
+  /** vídeo exibido NA tela (em vez do painel escuro) — acende como uma TV
+   * quando a energia chega nela (ver VideoScreenNode em ChipScene.tsx) */
+  video?: string;
+  /** onde fica o painel de texto dessa tela.
+   * 'left'/'right': ao LADO da tela, que fica do lado oposto (ver AIM) e
+   * gira pra encarar esse lado (ver NODE_ROTATION_Y em ChipScene.tsx).
+   * 'center': DENTRO da tela — ela vem centralizada e de frente (sem giro,
+   * senão o texto 2D não acompanharia a perspectiva do plano 3D), e o vídeo
+   * por trás escurece pra não competir com a leitura. */
+  panelSide?: PanelSide;
 }
 
 const V = (x: number, y: number, z: number) => new THREE.Vector3(x, y, z);
+
+// a câmera não mira exatamente no centro da tela: ela olha um pouco PRO LADO
+// dela, o que joga a tela pro lado oposto da viewport e abre espaço pro
+// painel de texto — sem isso a tela fica sempre no meio e todo o texto
+// empilha numa borda só, deixando a outra metade vazia. Sinal positivo =
+// tela vai pra esquerda (texto à direita), negativo = o contrário.
+const AIM = 1.8;
 
 export const SCENE_NODES: SceneNode[] = [
   {
@@ -34,70 +47,63 @@ export const SCENE_NODES: SceneNode[] = [
     id: 'apresentacao', position: null, camPos: V(0, 0.4, 7), lookAt: V(0, 0, 0), color: '#8fc3f0',
   },
   {
-    // segundo "nó vazio" só pra dar mais espaço de scroll pra apresentação
-    // (junção da logo, feixe, textos) — sem isso ela ficava espremida em
-    // pouquíssimo scroll comparado às outras cenas, parecendo bagunçada
+    id: 'apresentacao-meio', position: null, camPos: V(0, 0.4, 7), lookAt: V(0, 0, 0), color: '#8fc3f0',
+  },
+  {
+    // "nós vazios" (sem `position`, então a cena 3D os ignora) existem só pra
+    // reservar scroll: cada um vale um segmento, e são eles que definem o
+    // ritmo da abertura. Três deles = hero e apresentação se desenrolam com
+    // calma, em vez de passarem correndo em pouquíssimo scroll.
+    // PRES_TOTAL (Experience3D.tsx) tem que cobrir a mesma quantidade.
     id: 'apresentacao-fim', position: null, camPos: V(0, 0.4, 7), lookAt: V(0, 0, 0), color: '#8fc3f0',
   },
   {
-    id: 'sobre', position: V(-2.6, 1.1, -6), camPos: V(-1.1, 0.9, -1.5), lookAt: V(-2.6, 1.1, -6), color: '#8fc3f0',
-    panel: {
-      eyebrow: 'Quem somos',
-      heading: 'Tecnologia feita por quem constrói de verdade',
-      topics: [
-        { title: 'Velocidade de entrega', desc: 'Do briefing ao ar em semanas, não meses.' },
-        { title: 'Foco em conversão', desc: 'Cada decisão de design pensada pra gerar resultado.' },
-        { title: 'Suporte direto', desc: 'Você fala com quem desenvolve, sem intermediários.' },
-      ],
-    },
+    // texto à direita → mira deslocada pra direita, tela vai pra esquerda
+    id: 'sobre', position: V(-2.6, 1.1, -6), camPos: V(-1.1, 0.9, -1.5), lookAt: V(-2.6 + AIM, 1.1, -6), color: '#8fc3f0',
+    video: '/assets/video-sobre.mp4',
+    panelSide: 'right',
+    panelKey: 'sobre',
   },
   {
-    id: 'servicos', position: V(2.8, -0.6, -12), camPos: V(1.2, -0.3, -7), lookAt: V(2.8, -0.6, -12), color: '#4a8fd4',
-    panel: {
-      eyebrow: 'O que fazemos',
-      heading: 'Tecnologia que gera resultado real',
-      topics: [
-        { title: 'Landpages & Sites', desc: 'Páginas rápidas e otimizadas pra converter.' },
-        { title: 'Criação de Sistemas', desc: 'Painéis e plataformas sob medida.' },
-        { title: 'Automação com IA', desc: 'Atendimento e fluxos inteligentes 24h.' },
-        { title: 'Integrações', desc: 'Sistemas e canais num fluxo só.' },
-      ],
-    },
+    // texto à esquerda → tela vai pra direita
+    id: 'servicos', position: V(2.8, -0.6, -12), camPos: V(1.2, -0.3, -7), lookAt: V(2.8 - AIM, -0.6, -12), color: '#4a8fd4',
+    video: '/assets/video-servicos.mp4',
+    panelSide: 'left',
+    panelKey: 'servicos',
   },
   {
-    id: 'processo', position: V(-2.8, -1.2, -18), camPos: V(-1.1, -0.8, -13), lookAt: V(-2.8, -1.2, -18), color: '#9aa7b8',
-    panel: {
-      eyebrow: 'Como funciona',
-      heading: 'Um processo claro, do início ao ar',
-      topics: [
-        { title: '01 — Briefing', desc: 'Entendemos seu negócio e objetivos.' },
-        { title: '02 — Design', desc: 'Layout validado com você antes de codar.' },
-        { title: '03 — Desenvolvimento', desc: 'Código limpo, responsivo, com automações.' },
-        { title: '04 — Entrega & Suporte', desc: 'Site no ar e suporte contínuo.' },
-      ],
-    },
+    id: 'processo', position: V(-2.8, -1.2, -18), camPos: V(-1.1, -0.8, -13), lookAt: V(-2.8 + AIM, -1.2, -18), color: '#9aa7b8',
+    video: '/assets/video-como-funciona.mp4',
+    panelSide: 'right',
+    panelKey: 'processo',
+  },
+  // (a cena "projetos" ficava aqui, entre processo e contato — removida por
+  // ora. O texto dela segue pronto nos três idiomas em i18n/translations.ts,
+  // sob a chave `projetos`: pra trazer de volta basta um nó novo com
+  // panelKey: 'projetos'.)
+  {
+    // fecho do site: sem desvio de mira (lookAt no próprio nó) pra tela
+    // chegar centralizada, e o texto vai DENTRO dela em vez de ao lado.
+    // Câmera bem mais perto que nas outras (≈2.42 un em vez de ≈5) pra essa
+    // tela dominar o quadro — é o ponto final, e o texto mora dentro dela.
+    // Dois limites pra chegar mais perto que isso: abaixo de ~2.07 un a tela
+    // passa da ALTURA da viewport; e a largura dela vira ~1.35× a altura da
+    // viewport, então em telas menos largas que 1.35:1 ela transborda pelos
+    // lados antes disso.
+    // Em z=-24, e não -30, pra manter o passo de ~6 un entre cenas: sem a
+    // "projetos" no meio, um salto de 12 un seria percorrido no MESMO scroll
+    // de um de 6 e o trecho final passaria voando.
+    id: 'contato', position: V(0, 0, -24), camPos: V(0, 0.12, -21.58), lookAt: V(0, 0, -24), color: '#8fc3f0',
+    video: '/assets/video-contato.mp4',
+    panelSide: 'center',
+    panelKey: 'contato',
+    ctaHref: 'https://wa.me/5511986812921',
   },
   {
-    id: 'projetos', position: V(2.6, 1.3, -24), camPos: V(1.1, 0.9, -19), lookAt: V(2.6, 1.3, -24), color: '#4a8fd4',
-    panel: {
-      eyebrow: 'Projetos',
-      heading: 'Sites que já colocamos no ar',
-      topics: [
-        { title: 'Estética Automotiva — 2024', desc: 'Agendamento online com painel administrativo.' },
-        { title: 'Store — 2024', desc: 'Landing page de e-commerce com foco em conversão.' },
-        { title: 'DevMovies — 2023', desc: 'Catálogo de filmes e séries por categorias.' },
-      ],
-    },
-  },
-  {
-    id: 'contato', position: V(0, 0, -30), camPos: V(0, 0.3, -25), lookAt: V(0, 0, -30), color: '#8fc3f0',
-    panel: {
-      eyebrow: 'Contato',
-      heading: 'Pronto para o próximo nível?',
-      topics: [
-        { title: 'Fale com a gente', desc: 'Descubra como transformar seu negócio.' },
-      ],
-      cta: { label: 'Falar no WhatsApp', href: 'https://wa.me/5511986812921' },
-    },
+    // nó vazio de sobra no fim, com a MESMA câmera do contato (ela não se
+    // move aqui). Sem ele, a chegada da última tela caía exatamente no
+    // fim do scroll e o clareamento não tinha percurso pra acontecer — o
+    // visitante batia no fim da página no instante em que a tela acendia.
+    id: 'fim', position: null, camPos: V(0, 0.12, -21.58), lookAt: V(0, 0, -24), color: '#8fc3f0',
   },
 ];

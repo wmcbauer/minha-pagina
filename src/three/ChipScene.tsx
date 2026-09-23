@@ -1,11 +1,39 @@
 import { useMemo, useRef } from 'react';
 import { useFrame } from '@react-three/fiber';
-import { useScroll, Points, PointMaterial } from '@react-three/drei';
+import { useScroll, Points, PointMaterial, useVideoTexture } from '@react-three/drei';
 import * as THREE from 'three';
-import { SCENE_NODES } from './nodesConfig';
+import { SCENE_NODES, type PanelSide } from './nodesConfig';
+import { useCompactLayout } from '../hooks/useCompactLayout';
 
-/** Mesmo ângulo das telas — o texto acompanha essa inclinação. */
+/** Quanto a tela é girada — o sentido depende de cada nó (ver screenRotationY). */
 const NODE_ROTATION_Y = Math.PI / 6;
+
+/** Direção do giro da tela: sempre encarando o lado onde está o painel de
+ * texto (panelSide, em nodesConfig.ts) — nunca girada pro lado errado,
+ * de costas pro próprio texto. Com o texto DENTRO dela ('center') não há
+ * giro: o painel é HTML plano e não acompanharia a perspectiva do plano
+ * inclinado, então a tela vem de frente pra câmera. */
+function screenRotationY(panelSide: PanelSide | undefined, compacto: boolean) {
+  // em layout compacto todo texto vai pra dentro da tela, então toda tela
+  // vem de frente — girada, o texto 2D não acompanharia a perspectiva
+  if (compacto || panelSide === 'center') return 0;
+  return panelSide === 'left' ? -NODE_ROTATION_Y : NODE_ROTATION_Y;
+}
+
+/** quanto o vídeo assenta de brilho quando o texto fica por cima dele — só
+ * o estado de REPOUSO: o clareamento da chegada continua indo até 1 */
+const VIDEO_DIM_ATRAS_DO_TEXTO = 0.15;
+
+/**
+ * A borda fica um fio À FRENTE do plano, em vez de exatamente em cima dele.
+ * Coplanares, os dois disputam o mesmo valor de profundidade e o teste
+ * decide pixel a pixel quem aparece — e a aresta MAIS DISTANTE perde, por
+ * ter menos precisão de profundidade. Como a câmera olha levemente de cima,
+ * a aresta mais distante é a de baixo: era ela que sumia.
+ * O valor é pequeno demais pra deslocar a borda visivelmente (menos de 1px
+ * na tela), mas já basta pra ela ganhar o teste sempre.
+ */
+const BORDA_A_FRENTE = 0.005;
 
 /**
  * Textura de brilho com gradiente radial (borda suave de verdade, não uma
@@ -33,9 +61,43 @@ const GLOW_TEXTURE = (() => {
   return texture;
 })();
 
+/**
+ * Proporção de referência das distâncias de câmera em nodesConfig.ts: elas
+ * foram escolhidas olhando uma viewport larga (~16:10).
+ */
+const ASPECT_REF = 1.6;
+
+/**
+ * O campo de visão da câmera é VERTICAL: a altura de mundo visível depende
+ * só da distância, mas a LARGURA visível é essa altura × proporção da tela.
+ * Numa tela estreita ou em retrato cabe muito menos largura, e as telas
+ * (3.4 unidades) estouravam pelos lados — no celular chegavam a ser mais
+ * largas que a viewport inteira.
+ *
+ * Então a câmera se afasta do ponto que está mirando na mesma medida em que
+ * a proporção aperta. Em tela larga o fator é 1 e nada muda.
+ */
+function fatorDeAfastamento(aspect: number) {
+  if (!Number.isFinite(aspect) || aspect <= 0) return 1;
+  return Math.max(1, ASPECT_REF / aspect);
+}
+
+/**
+ * Em layout compacto o texto não cabe DENTRO da tela (ela fica com ~84% da
+ * largura da viewport, e o texto precisaria de mais que isso), então a
+ * composição vira empilhada: tela em cima, texto embaixo. Pra isso a câmera
+ * mira um pouco ABAIXO do nó, o que empurra a tela pra parte de cima do
+ * quadro e libera a metade de baixo pro texto.
+ *
+ * Fração da altura visível: 0.18 sobe a tela o suficiente pra ela ficar
+ * centrada em ~32% da altura, deixando a faixa de baixo livre.
+ */
+const MIRA_ABAIXO = 0.18;
+
 /** Câmera viaja pelo espaço 3D seguindo o offset de scroll (0 → 1). */
 function CameraRig() {
   const scroll = useScroll();
+  const compacto = useCompactLayout();
   const tmpPos = useMemo(() => new THREE.Vector3(), []);
   const tmpLook = useMemo(() => new THREE.Vector3(), []);
 
@@ -53,6 +115,35 @@ function CameraRig() {
     tmpPos.lerpVectors(a.camPos, b.camPos, t);
     tmpLook.lerpVectors(a.lookAt, b.lookAt, t);
 
+    // afasta ao longo da própria direção de visão, então o enquadramento é
+    // o mesmo — só mais longe, o que faz a largura da tela voltar a caber
+    const fator = fatorDeAfastamento(state.size.width / state.size.height);
+    if (fator > 1) tmpPos.sub(tmpLook).multiplyScalar(fator).add(tmpLook);
+
+    // sobe a tela no quadro pra abrir espaço pro texto embaixo. Só vale onde
+    // existe tela: na abertura (nós sem `position`) o hero é HTML e não se
+    // move. O peso interpola entre os dois extremos do segmento, senão o
+    // desvio saltaria de 1 pra 0 na virada de um segmento pro outro.
+    if (compacto) {
+      const peso = THREE.MathUtils.lerp(a.position ? 1 : 0, b.position ? 1 : 0, t);
+      if (peso > 0) {
+        // desfaz o desvio lateral do AIM (nodesConfig.ts): ele abre espaço
+        // pro painel AO LADO, e em pilha o texto vai embaixo — a tela tem
+        // que voltar pro centro horizontal
+        const alvoX = THREE.MathUtils.lerp(
+          a.position?.x ?? a.lookAt.x,
+          b.position?.x ?? b.lookAt.x,
+          t,
+        );
+        tmpLook.x = THREE.MathUtils.lerp(tmpLook.x, alvoX, peso);
+
+        const distancia = tmpPos.distanceTo(tmpLook);
+        const fov = (state.camera as THREE.PerspectiveCamera).fov;
+        const alturaVisivel = 2 * distancia * Math.tan((fov * Math.PI) / 360);
+        tmpLook.y -= alturaVisivel * MIRA_ABAIXO * peso;
+      }
+    }
+
     state.camera.position.lerp(tmpPos, 0.18);
     const currentLook = state.camera.userData.look ?? tmpLook.clone();
     currentLook.lerp(tmpLook, 0.18);
@@ -68,11 +159,45 @@ function CameraRig() {
 // de energia chegar nela)
 const REVEAL_WINDOW = 0.03;
 
+const SEG_COUNT_CENA = SCENE_NODES.length - 1;
+// quanto a tela ainda segura acesa depois que a energia passa, antes de
+// começar a sumir. Curto de propósito: a câmera já está indo embora nesse
+// trecho, então tela parada acesa vira uma placa atravessando o quadro.
+const SAIDA_HOLD = (1 / SEG_COUNT_CENA) * 0.1;
+// última tela com conteúdo: é o fecho do site e não some — o visitante
+// termina olhando pra ela
+const ULTIMA_TELA = SCENE_NODES.reduce((ultimo, n, i) => (n.position ? i : ultimo), -1);
+
+/**
+ * Visibilidade da tela ao longo do scroll. A saída é o espelho da entrada:
+ * mesma janela (REVEAL_WINDOW), só que ao contrário, quando a energia segue
+ * pra próxima. Antes a tela revelava e ficava acesa PRA SEMPRE, então ela
+ * continuava passando pelo quadro enquanto a câmera ia embora.
+ */
+function screenExit(offset: number, targetOffset: number, index: number) {
+  if (index === ULTIMA_TELA) return 1;
+  const inicioSaida = targetOffset + SAIDA_HOLD;
+  return 1 - THREE.MathUtils.smoothstep(offset, inicioSaida, inicioSaida + REVEAL_WINDOW);
+}
+
+function screenVisibility(offset: number, targetOffset: number, index: number) {
+  const entra = THREE.MathUtils.smoothstep(offset, targetOffset - REVEAL_WINDOW, targetOffset);
+  return entra * screenExit(offset, targetOffset, index);
+}
+
+// tamanho da "tela" em unidades de mundo — grande o bastante pra ocupar de
+// verdade o seu lado da viewport, dividindo o espaço com o painel de texto
+// (a folga do painel, PANEL_GAP em Experience3D.tsx, acompanha esse valor)
+const SCREEN_W = 3.4;
+const SCREEN_H = 2.15;
+const SCREEN_PLANE_GEO = new THREE.PlaneGeometry(SCREEN_W, SCREEN_H);
+
 /** Uma "tela" que só aparece quando o ponto de energia chega nela, e
  * continua acendendo mais conforme o scroll segue por perto. */
 function ScreenNode({ index }: { index: number }) {
   const node = SCENE_NODES[index];
   const scroll = useScroll();
+  const compacto = useCompactLayout();
   const matRef = useRef<THREE.MeshStandardMaterial>(null);
   const edgeMatRef = useRef<THREE.LineBasicMaterial>(null);
   const segCount = SCENE_NODES.length - 1;
@@ -86,19 +211,23 @@ function ScreenNode({ index }: { index: number }) {
     matRef.current.emissiveIntensity = THREE.MathUtils.lerp(matRef.current.emissiveIntensity, intensity, 0.1);
 
     // invisível até o ponto de energia chegar (offset alcança targetOffset)
-    // — revela suavemente só nesse instante final, não durante toda a
-    // aproximação
-    const appear = THREE.MathUtils.smoothstep(offset, targetOffset - REVEAL_WINDOW, targetOffset);
-    matRef.current.opacity = appear;
-    if (edgeMatRef.current) edgeMatRef.current.opacity = appear;
+    // — revela suavemente só nesse instante final, e some da mesma forma
+    // quando a energia segue adiante
+    const visivel = screenVisibility(offset, targetOffset, index);
+    matRef.current.opacity = visivel;
+    if (edgeMatRef.current) edgeMatRef.current.opacity = visivel;
   });
 
   if (!node.position) return null;
 
+  const rotY = screenRotationY(node.panelSide, compacto);
+
   return (
-    <group position={node.position}>
-      <mesh rotation={[0, NODE_ROTATION_Y, 0]}>
-        <planeGeometry args={[1.5, 0.95]} />
+    // a rotação vive no grupo pra que o deslocamento da borda acompanhe a
+    // inclinação da tela (ele precisa ser ao longo da normal do plano)
+    <group position={node.position} rotation={[0, rotY, 0]}>
+      <mesh>
+        <planeGeometry args={[SCREEN_W, SCREEN_H]} />
         <meshStandardMaterial
           ref={matRef}
           color="#101828"
@@ -111,8 +240,101 @@ function ScreenNode({ index }: { index: number }) {
           opacity={0}
         />
       </mesh>
-      <lineSegments rotation={[0, NODE_ROTATION_Y, 0]}>
-        <edgesGeometry args={[new THREE.PlaneGeometry(1.5, 0.95)]} />
+      <lineSegments position={[0, 0, BORDA_A_FRENTE]}>
+        <edgesGeometry args={[SCREEN_PLANE_GEO]} />
+        <lineBasicMaterial ref={edgeMatRef} color={node.color} transparent opacity={0} />
+      </lineSegments>
+    </group>
+  );
+}
+
+/**
+ * Tela que exibe um vídeo (o "como funciona"). Mesma revelação das outras,
+ * mas com cara de TV ligando: o painel preto aparece primeiro, o vídeo vai
+ * clareando do escuro até o brilho normal e dá um estouro curto de luz bem
+ * no instante em que a energia chega — o vídeo também só roda enquanto essa
+ * tela está à vista, sempre começando do zero.
+ */
+function VideoScreenNode({ index }: { index: number }) {
+  const node = SCENE_NODES[index];
+  const scroll = useScroll();
+  const texture = useVideoTexture(node.video!, { muted: true, loop: true, start: false, playsInline: true });
+  const compacto = useCompactLayout();
+  const matRef = useRef<THREE.MeshBasicMaterial>(null);
+  const edgeMatRef = useRef<THREE.LineBasicMaterial>(null);
+  const playingRef = useRef(false);
+  const segCount = SCENE_NODES.length - 1;
+  const targetOffset = index / segCount;
+
+  useFrame(() => {
+    const offset = Number.isFinite(scroll.offset) ? scroll.offset : 0;
+    const visivel = screenVisibility(offset, targetOffset, index);
+
+    const video = texture.image as HTMLVideoElement | undefined;
+    if (video) {
+      if (visivel > 0.02 && !playingRef.current) {
+        playingRef.current = true;
+        video.currentTime = 0;
+        void video.play();
+      } else if (visivel <= 0.02 && playingRef.current) {
+        playingRef.current = false;
+        video.pause();
+      }
+    }
+
+    if (matRef.current) {
+      // o painel (preto) aparece bem antes do conteúdo acender — é isso que
+      // dá a leitura de "tela ligando", em vez de a imagem só surgir do nada.
+      // Na saída ele acompanha `visivel`, pra sumir junto com o resto.
+      const entradaDoPainel = THREE.MathUtils.smoothstep(
+        offset,
+        targetOffset - REVEAL_WINDOW,
+        targetOffset - REVEAL_WINDOW * 0.55,
+      );
+      matRef.current.opacity = entradaDoPainel * screenExit(offset, targetOffset, index);
+      // estouro curto de brilho bem no instante da chegada, antes de
+      // assentar no brilho normal (acima de 1 o bloom pega e estoura)
+      const turnOnFlash = Math.max(0, 1 - Math.abs(offset - targetOffset) / (REVEAL_WINDOW * 0.6));
+      // com texto por cima, o vídeo ainda acende INTEIRO na chegada (mesmo
+      // clareamento das outras telas) e só depois assenta no escuro, já com
+      // o texto por cima. Escurecer desde a chegada matava justamente o
+      // momento em que a tela liga.
+      let brilhoBase = 1;
+      // escurece só quando há texto POR CIMA do vídeo. Em layout compacto o
+      // texto vai abaixo da tela, não sobre ela, então o vídeo fica cheio.
+      if (!compacto && node.panelSide === 'center') {
+        const assentou = THREE.MathUtils.smoothstep(
+          offset,
+          targetOffset,
+          targetOffset + REVEAL_WINDOW * 2,
+        );
+        brilhoBase = THREE.MathUtils.lerp(1, VIDEO_DIM_ATRAS_DO_TEXTO, assentou);
+      }
+      matRef.current.color.setScalar(visivel * (brilhoBase + turnOnFlash * 1.6));
+    }
+    if (edgeMatRef.current) edgeMatRef.current.opacity = visivel;
+  });
+
+  if (!node.position) return null;
+
+  const rotY = screenRotationY(node.panelSide, compacto);
+
+  return (
+    <group position={node.position} rotation={[0, rotY, 0]}>
+      <mesh>
+        <planeGeometry args={[SCREEN_W, SCREEN_H]} />
+        <meshBasicMaterial
+          ref={matRef}
+          map={texture}
+          color="#000000"
+          side={THREE.DoubleSide}
+          toneMapped={false}
+          transparent
+          opacity={0}
+        />
+      </mesh>
+      <lineSegments position={[0, 0, BORDA_A_FRENTE]}>
+        <edgesGeometry args={[SCREEN_PLANE_GEO]} />
         <lineBasicMaterial ref={edgeMatRef} color={node.color} transparent opacity={0} />
       </lineSegments>
     </group>
@@ -387,7 +609,7 @@ export default function ChipScene() {
         if (!n.position) return null; // hero e apresentação não têm tela — só a câmera passa por eles
         return (
           <group key={n.id}>
-            <ScreenNode index={index} />
+            {n.video ? <VideoScreenNode index={index} /> : <ScreenNode index={index} />}
             <DataTrail index={index} velocityRef={velocityRef} directionRef={directionRef} />
           </group>
         );

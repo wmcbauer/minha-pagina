@@ -1,29 +1,37 @@
 import type { RefObject } from 'react';
 import LogoEnergyFrame from './LogoEnergyFrame';
+import ScrambleText from './ScrambleText';
 import type { EnergyCardHandle } from './EnergyCard';
+import { useLanguage } from '../hooks/useLanguage';
 
 export default function Hero({
   logoCardRef,
 }: {
   logoCardRef?: RefObject<EnergyCardHandle>;
 }) {
+  const { t } = useLanguage();
+
   return (
     <section id="hero" className="scene-hero">
       <div className="hero-overlay" />
       <div className="hero-glow" />
+      {/* entrada do site: tudo "materializa" como dado se resolvendo — os
+          textos saem de ruído (ScrambleText) e a logo assenta de um borrão
+          claro pra imagem nítida, com uma varredura descendo por cima. A
+          escada de delays abaixo é a ordem em que cada peça chega. */}
       <div className="hero-inner">
-        <div className="hero-eyebrow">Desenvolvimento web · Automação · IA</div>
+        <ScrambleText as="div" className="hero-eyebrow" text={t.hero.eyebrow} delay={80} duration={520} />
         {/* mesmo "plano" visual dos textos (retângulo de energia), mas aqui a
             energia sai dos dois lados da logo e se junta embaixo, de onde
             desce o feixe até o texto */}
         <LogoEnergyFrame ref={logoCardRef} className="pres-card--logo">
-          <img className="hero-logo-img" src="/assets/logo.png" alt="WMC Tech" width={909} height={327} />
-          <p className="hero-sub">Soluções web sob medida para o seu negócio vender e crescer mais.</p>
+          <span className="hero-logo-wrap">
+            <img className="hero-logo-img" src="/assets/logo.png" alt="WMC Tech" width={909} height={327} />
+          </span>
+          <ScrambleText as="p" className="hero-sub" text={t.hero.subtitle} delay={620} duration={680} />
         </LogoEnergyFrame>
-        <p className="hero-support">
-          Sites, sistemas e automações prontos para vender por você — do primeiro contato ao pós-venda.
-        </p>
-        <div className="hero-badge">Projetos entregues em todo o Brasil</div>
+        <ScrambleText as="p" className="hero-support" text={t.hero.support} delay={920} duration={700} />
+        <ScrambleText as="div" className="hero-badge" text={t.hero.badge} delay={1180} duration={520} />
       </div>
       <div className="hero-scroll-cue" aria-hidden="true">
         <span className="hero-scroll-line" />

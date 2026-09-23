@@ -80,7 +80,10 @@ const TextArrivalCard = forwardRef<EnergyCardHandle, { children: ReactNode; clas
             rx = w;
             ry = h - bRight;
           } else if (bBottom > 0) {
-            rx = w - bBottom;
+            // a borda de baixo (.text-edge-bottom) cresce da ESQUERDA pra
+            // DIREITA (left:-1px fixo, width aumentando) — o ponto tem que
+            // acompanhar essa ponta, não andar ao contrário dela
+            rx = bBottom;
             ry = h;
           } else if (bLeft > 0) {
             rx = 0;

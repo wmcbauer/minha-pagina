@@ -104,11 +104,6 @@ const LogoEnergyFrame = forwardRef<EnergyCardHandle, { children: ReactNode; clas
           contentRef.current.style.filter = `brightness(${brightness})`;
           contentRef.current.style.opacity = String(1 - clamped);
         }
-        // o preenchimento do retângulo também esvai — a tonalidade azulada
-        // vai sumindo até ficar exatamente a cor do fundo por trás dele
-        if (cardRef.current) {
-          cardRef.current.style.backgroundColor = `rgba(122, 179, 232, ${0.07 * (1 - clamped)})`;
-        }
       },
       setFade(p: number) {
         const clamped = Math.max(0, Math.min(1, p));
