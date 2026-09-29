@@ -503,8 +503,15 @@ function CameraCapture({ onReady }: { onReady: (camera: THREE.Camera) => void })
   return null;
 }
 
-export default function Experience3D() {
+export default function Experience3D({ onPronto }: { onPronto?: () => void }) {
   const { t } = useLanguage();
+  // avisa o App que a experiência montou (a tela de abertura pode sair). Fica
+  // num ref pra o efeito rodar UMA vez, sem depender da identidade da função.
+  const onProntoRef = useRef(onPronto);
+  onProntoRef.current = onPronto;
+  useEffect(() => {
+    onProntoRef.current?.();
+  }, []);
   const compacto = useCompactLayout();
   // o loop de animação roda num efeito com deps [], então não veria a
   // mudança de estado — este ref é o espelho que ele lê
@@ -566,6 +573,10 @@ export default function Experience3D() {
     // aviso, só não acontecia nada.
     const primeiraVez = !scrollElRef.current;
     scrollElRef.current = el;
+    // sem barra visível: o scroll agora é só encaixe entre blocos (ver
+    // useEffect de navegação por gesto, abaixo) — uma barra arrastável
+    // deixaria escapar pro meio de um bloco, driblando esse encaixe
+    el.classList.add('scroll-sem-barra');
     if (primeiraVez) requestAnimationFrame(measureLogo);
   };
 
@@ -575,7 +586,7 @@ export default function Experience3D() {
     { offset: NAV_OFFSETS[0], label: t.nav.inicio },
     { offset: NAV_OFFSETS[1], label: t.nav.solucoes },
     { offset: NAV_OFFSETS[2], label: t.nav.equipe },
-    { offset: NAV_OFFSETS[3], label: t.nav.portfolio },
+    { offset: NAV_OFFSETS[3], label: t.nav.naPratica },
     ...TELA_PANELS.map(({ node, index }) => ({
       offset: index / SEG_COUNT,
       label: t.telas[node.panelKey!].eyebrow,
@@ -604,6 +615,116 @@ export default function Experience3D() {
       : [...NAV_OFFSETS].reverse().find((o) => o < atual - MARGEM);
     if (alvo !== undefined) jumpTo(alvo);
   };
+
+  // Scroll agora é só encaixe: cada gesto (roda do mouse, arrasto no touch,
+  // Page Down/Up, setas, espaço) troca de UM bloco inteiro pro outro, nunca
+  // pára no meio — em vez de deixar o navegador rolar livre em cima do
+  // contêiner do drei, barramos o comportamento nativo dele por completo
+  // (preventDefault em tudo) e reaproveitamos o MESMO stepBy() dos botões
+  // da trilha, que já sempre pousa exatamente num NAV_OFFSETS.
+  useEffect(() => {
+    // trava enquanto uma transição está em andamento — sem isso, um wheel de
+    // trackpad (que dispara dezenas de eventos por gesto) pularia vários
+    // blocos de uma vez só num único movimento de dedo
+    let travado = false;
+    const TRAVA_MS = 700;
+    const destravarLogo = () => {
+      window.setTimeout(() => {
+        travado = false;
+      }, TRAVA_MS);
+    };
+    const passo = (direcao: -1 | 1) => {
+      if (travado) return;
+      travado = true;
+      stepBy(direcao);
+      destravarLogo();
+    };
+
+    // Um painel de texto que passou da altura da janela (zoom, celular deitado)
+    // rola por dentro — sem esta exceção o resto do texto ficaria inalcançável,
+    // já que a rolagem da página virou salto entre blocos. A folga de 24px
+    // ignora os poucos px de deslocamento da animação de entrada.
+    const painelRolavelSobre = (alvo: EventTarget | null) => {
+      const painel = (alvo as HTMLElement | null)?.closest?.('.tela-panel') as HTMLElement | null;
+      if (!painel) return false;
+      // só conta se o painel realmente rola (overflow auto/scroll). Comparar
+      // scrollHeight sozinho dava falso positivo no painel central: o véu
+      // escuro (::before) sai da caixa e infla o scrollHeight, e a roda sobre
+      // o Contato escapava do encaixe e deixava a página rolar livre.
+      const overflowY = getComputedStyle(painel).overflowY;
+      if (overflowY !== 'auto' && overflowY !== 'scroll') return false;
+      return painel.scrollHeight > painel.clientHeight + 24;
+    };
+
+    const aoRodar = (e: WheelEvent) => {
+      if (painelRolavelSobre(e.target)) return;
+      e.preventDefault();
+      if (Math.abs(e.deltaY) < 1) return; // ruído — trackpad às vezes dispara delta quase zero
+      passo(e.deltaY > 0 ? 1 : -1);
+    };
+
+    // touch: sem 'wheel', então mede o arrasto entre o começo e o fim — só
+    // conta gesto de UM dedo só; com dois (pinça de zoom) deixa passar
+    // intocado, senão quem precisa dar zoom pra enxergar melhor perde essa
+    // opção, e um dedo levantando da pinça não dispararia troca de bloco
+    let touchInicioY = 0;
+    let gestoDeUmDedo = false;
+    const LIMIAR_SWIPE_PX = 40;
+    let toqueEmPainelRolavel = false;
+    const aoComecarToque = (e: TouchEvent) => {
+      gestoDeUmDedo = e.touches.length === 1;
+      if (gestoDeUmDedo) touchInicioY = e.touches[0].clientY;
+      toqueEmPainelRolavel = painelRolavelSobre(e.target);
+    };
+    const aoMoverToque = (e: TouchEvent) => {
+      if (e.touches.length > 1) gestoDeUmDedo = false; // virou pinça no meio do gesto
+      // gesto que começou dentro de um painel rolável é pra rolar o painel
+      if (toqueEmPainelRolavel) {
+        gestoDeUmDedo = false; // e não conta como troca de bloco
+        return;
+      }
+      if (e.touches.length === 1) e.preventDefault();
+    };
+    const aoSoltarToque = (e: TouchEvent) => {
+      if (!gestoDeUmDedo || e.touches.length > 0) return;
+      const delta = touchInicioY - e.changedTouches[0].clientY;
+      if (Math.abs(delta) < LIMIAR_SWIPE_PX) return;
+      passo(delta > 0 ? 1 : -1);
+    };
+
+    // teclado: as mesmas teclas que o navegador usaria pra rolar a página
+    // nativamente — sem interceptar aqui, dariam outro jeito de parar no meio
+    const TECLAS_PROXIMO = ['PageDown', 'ArrowDown', ' '];
+    const TECLAS_ANTERIOR = ['PageUp', 'ArrowUp'];
+    const aoTeclar = (e: KeyboardEvent) => {
+      // não intercepta espaço/setas quando o foco está num controle que usa
+      // essas teclas pro próprio propósito (botão, link) — evita "roubar" a
+      // tecla de quem só quer ativar o elemento focado
+      const alvo = e.target as HTMLElement | null;
+      if (alvo && (alvo.tagName === 'BUTTON' || alvo.tagName === 'A')) return;
+      if (TECLAS_PROXIMO.includes(e.key)) {
+        e.preventDefault();
+        passo(1);
+      } else if (TECLAS_ANTERIOR.includes(e.key)) {
+        e.preventDefault();
+        passo(-1);
+      }
+    };
+
+    window.addEventListener('wheel', aoRodar, { passive: false });
+    window.addEventListener('touchstart', aoComecarToque, { passive: true });
+    window.addEventListener('touchmove', aoMoverToque, { passive: false });
+    window.addEventListener('touchend', aoSoltarToque, { passive: true });
+    window.addEventListener('keydown', aoTeclar);
+    return () => {
+      window.removeEventListener('wheel', aoRodar);
+      window.removeEventListener('touchstart', aoComecarToque);
+      window.removeEventListener('touchmove', aoMoverToque);
+      window.removeEventListener('touchend', aoSoltarToque);
+      window.removeEventListener('keydown', aoTeclar);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // loop contínuo (requestAnimationFrame, igual ao useFrame do lado 3D) que
   // move os três feixes — sai da logo, some no primeiro texto, sai dele pra
@@ -827,9 +948,21 @@ export default function Experience3D() {
             // Largo: acompanha a altura do nó, com margem proporcional pra
             // não sair pelo topo em janela baixa.
             const alturaJanela = window.innerHeight;
-            const top = compactoRef.current
-              ? alturaJanela * 0.72
-              : Math.max(alturaJanela * 0.28, Math.min(screen.y, alturaJanela * 0.72));
+            // Com texto maior os painéis ficaram mais altos, e a faixa fixa
+            // de 28%–72% cortava o topo dos maiores. Agora o limite vem da
+            // ALTURA REAL do painel: ele nunca invade a faixa do header/idioma
+            // (em cima) nem o botão de WhatsApp (embaixo, maior no celular).
+            const alturaPainel = el.offsetHeight;
+            const margemTopo = 84;
+            const margemBase = compactoRef.current ? 76 : 24;
+            const minCentro = alturaPainel / 2 + margemTopo;
+            const maxCentro = alturaJanela - alturaPainel / 2 - margemBase;
+            const desejado = compactoRef.current ? alturaJanela * 0.72 : screen.y;
+            // se nem assim cabe (janela muito baixa), centraliza — o painel
+            // tem max-height e rola por dentro (ver CSS)
+            const top = minCentro <= maxCentro
+              ? Math.max(minCentro, Math.min(desejado, maxCentro))
+              : alturaJanela / 2;
             el.style.left = `${left}px`;
             el.style.top = `${top}px`;
 
@@ -908,7 +1041,6 @@ export default function Experience3D() {
         <TelaPanel
           key={node.id}
           panelKey={node.panelKey!}
-          ctaHref={node.ctaHref}
           side={compacto ? 'center' : side}
           ref={(handle) => {
             telaPanelRefs.current[index] = handle;

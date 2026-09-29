@@ -28,7 +28,7 @@ export default function Hero({
           <span className="hero-logo-wrap">
             <img className="hero-logo-img" src="/assets/logo.png" alt="WMC Tech" width={909} height={327} />
           </span>
-          <ScrambleText as="p" className="hero-sub" text={t.hero.subtitle} delay={620} duration={680} />
+          <ScrambleText as="h1" className="hero-sub" text={t.hero.subtitle} delay={620} duration={680} />
         </LogoEnergyFrame>
         <ScrambleText as="p" className="hero-support" text={t.hero.support} delay={920} duration={700} />
         <ScrambleText as="div" className="hero-badge" text={t.hero.badge} delay={1180} duration={520} />

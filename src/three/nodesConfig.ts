@@ -13,9 +13,6 @@ export interface SceneNode {
   /** chave do texto do painel ao lado da tela — o conteúdo em si mora em
    * i18n/translations.ts (`telas`), pra acompanhar a troca de idioma */
   panelKey?: TelaKey;
-  /** link do botão do painel, quando tem — fica aqui, e não na tradução,
-   * porque URL é a mesma nos três idiomas */
-  ctaHref?: string;
   /** vídeo exibido NA tela (em vez do painel escuro) — acende como uma TV
    * quando a energia chega nela (ver VideoScreenNode em ChipScene.tsx) */
   video?: string;
@@ -97,7 +94,6 @@ export const SCENE_NODES: SceneNode[] = [
     video: '/assets/video-contato.mp4',
     panelSide: 'center',
     panelKey: 'contato',
-    ctaHref: 'https://wa.me/5511986812921',
   },
   {
     // nó vazio de sobra no fim, com a MESMA câmera do contato (ela não se

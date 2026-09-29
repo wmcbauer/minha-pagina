@@ -3,15 +3,75 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>WMC Tech</title>
-<meta name="description" content="Sites que vendem. Automações que trabalham por você.">
+<title>WMC Tech — Sites e atendimento automático para pequenos negócios</title>
+<meta name="description" content="Criamos o site e o atendimento automático da sua empresa, com prazo e valor por escrito e tudo explicado sem jargão. Orçamento sem compromisso.">
+<meta name="theme-color" content="#050810">
 <link rel="icon" href="/assets/logo.png">
+
+<!-- Prévia ao compartilhar (WhatsApp, Instagram, Facebook, LinkedIn). Os
+     robôs dessas redes NÃO executam JavaScript: só leem este HTML estático,
+     então sem estas tags o link chegava sem imagem e sem título. As URLs
+     precisam ser absolutas — se o domínio mudar, troque aqui. -->
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="WMC Tech">
+<meta property="og:locale" content="pt_BR">
+<meta property="og:url" content="https://wmcdevfrontend.tech/">
+<meta property="og:title" content="WMC Tech — Sites e atendimento automático para pequenos negócios">
+<meta property="og:description" content="Criamos o site e o atendimento automático da sua empresa. Prazo e valor por escrito, tudo explicado sem jargão. Orçamento sem compromisso.">
+<meta property="og:image" content="https://wmcdevfrontend.tech/og-image.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="WMC Tech — sites e atendimento automático para pequenos negócios">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="WMC Tech — Sites e atendimento automático para pequenos negócios">
+<meta name="twitter:description" content="Criamos o site e o atendimento automático da sua empresa. Orçamento sem compromisso.">
+<meta name="twitter:image" content="https://wmcdevfrontend.tech/og-image.png">
+
+<!-- Dados estruturados: dizem ao Google que isto é uma empresa de serviços,
+     com nome, telefone e logo. Só entram fatos já publicados no site —
+     endereço e CNPJ ficam de fora até existirem. -->
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "ProfessionalService",
+  "name": "WMC Tech",
+  "url": "https://wmcdevfrontend.tech/",
+  "logo": "https://wmcdevfrontend.tech/assets/logo.png",
+  "image": "https://wmcdevfrontend.tech/og-image.png",
+  "description": "Criamos o site e o atendimento automático da sua empresa, com prazo e valor por escrito e tudo explicado sem jargão.",
+  "telephone": "+55-11-91793-0168",
+  "areaServed": "BR",
+  "availableLanguage": ["pt-BR", "en", "es"]
+}
+</script>
+
+<!-- Quem já escolheu inglês ou espanhol não deve ver, nem por um instante, o
+     texto estático em português abaixo: marca o <html> antes da primeira
+     pintura pra escondê-lo (o React mostra a versão no idioma certo logo
+     em seguida). -->
+<script>
+  try {
+    var l = localStorage.getItem('wmc-lang');
+    if (l === 'en' || l === 'es') document.documentElement.classList.add('boot-oculto');
+  } catch (e) {}
+</script>
+
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
 <link href="https://fonts.googleapis.com/css2?family=DM+Mono:ital,wght@0,300;0,400;0,500;1,300&family=Syne:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
 </head>
 <body>
-<div id="root"></div>
+<!-- Primeira pintura: aparece na hora, antes de qualquer JavaScript, e é o
+     que buscadores e quem está sem JS enxergam. O React troca este bloco pelo
+     componente BootScreen (src/components/BootScreen.tsx), que é IDÊNTICO —
+     mantenha os dois em sincronia (texto em português = translations.pt.hero). -->
+<div id="root"><div class="boot"><div class="boot-inner"><img class="boot-logo" src="/assets/logo.png" alt="WMC Tech" width="909" height="327"><h1 class="boot-title">Criamos o site e o atendimento automático da sua empresa, pra você vender mais sem trabalhar mais.</h1><p class="boot-support">Você conta o que precisa, a gente cuida de tudo — e explica cada passo em português claro.</p></div></div></div>
+<noscript>
+  <p style="position:fixed;left:0;right:0;bottom:1.5rem;text-align:center;color:#eef2f6;font-family:sans-serif">
+    Este site precisa de JavaScript para a experiência completa.
+    <a href="https://wa.me/5511917930168" style="color:#8fc3f0">Fale conosco no WhatsApp</a>.
+  </p>
+</noscript>
 <script type="module" src="/src/main.tsx"></script>
 </body>
 </html>

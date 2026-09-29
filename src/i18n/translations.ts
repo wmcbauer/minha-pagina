@@ -13,12 +13,24 @@ export interface TelaPanelContent {
   eyebrow: string;
   heading: string;
   topics: PanelTopic[];
-  /** só o rótulo do botão — o link fica em nodesConfig.ts (ctaHref), porque
-   * URL não é texto traduzível e não deve ser repetida em cada idioma */
+  /** só o rótulo do botão — o link vem de config/contact.ts, porque URL e
+   * número não são texto traduzível e não devem ser repetidos por idioma */
   cta?: string;
 }
 
 export interface Translation {
+  /** título e descrição da aba/busca no idioma ativo (o HTML estático que os
+   * robôs leem é o português — ver index.html; isto acompanha quem troca) */
+  meta: {
+    title: string;
+    description: string;
+  };
+  /** botão de WhatsApp: `label` é o texto/nome acessível, `mensagem` chega
+   * pré-preenchida na conversa (assim o atendimento já sabe de onde veio) */
+  whatsapp: {
+    label: string;
+    mensagem: string;
+  };
   hero: {
     eyebrow: string;
     subtitle: string;
@@ -49,7 +61,10 @@ export interface Translation {
      * card2.label, porque a primeira TELA também se chama "quem somos" — dois
      * nós com o mesmo nome deixam a trilha ambígua (e o leitor de tela pior) */
     equipe: string;
-    portfolio: string;
+    /** o card 3 da apresentação: ponte pras telas ("veja na prática").
+     * Já se chamou "portfólio", mas não há portfólio no site — o nome
+     * prometia o que o visitante não ia encontrar */
+    naPratica: string;
     /** nome acessível dos dois controles de passo */
     anterior: string;
     proximo: string;
@@ -58,19 +73,28 @@ export interface Translation {
 
 export const translations: Record<Language, Translation> = {
   pt: {
+    meta: {
+      title: 'WMC Tech — Sites e atendimento automático para pequenos negócios',
+      description:
+        'Criamos o site e o atendimento automático da sua empresa, com prazo e valor por escrito e tudo explicado sem jargão. Orçamento sem compromisso.',
+    },
+    whatsapp: {
+      label: 'Falar no WhatsApp',
+      mensagem: 'Olá! Vi o site da WMC Tech e gostaria de um orçamento.',
+    },
     hero: {
-      eyebrow: 'Desenvolvimento web · Automação · IA',
-      subtitle: 'Soluções web sob medida para o seu negócio vender e crescer mais.',
-      support: 'Sites, sistemas e automações prontos para vender por você — do primeiro contato ao pós-venda.',
+      eyebrow: 'Sites · Organização · Atendimento automático',
+      subtitle: 'Criamos o site e o atendimento automático da sua empresa, pra você vender mais sem trabalhar mais.',
+      support: 'Você conta o que precisa, a gente cuida de tudo — e explica cada passo em português claro.',
       badge: 'Projetos entregues em todo o Brasil',
     },
     card1: {
-      intro: 'A WMC Tech resolve todo tipo de necessidade digital do seu negócio:',
+      intro: 'A WMC Tech resolve os problemas digitais do seu negócio, sem você precisar entender de tecnologia:',
       bullets: [
-        { title: 'Landpages & Sites', desc: 'Páginas rápidas e otimizadas pra converter.' },
-        { title: 'Criação de Sistemas', desc: 'Painéis e plataformas sob medida.' },
-        { title: 'Automação com IA', desc: 'Atendimento e fluxos inteligentes 24h.' },
-        { title: 'Integrações', desc: 'Sistemas e canais num fluxo só.' },
+        { title: 'Site que vende', desc: 'Páginas rápidas e bonitas, feitas pra transformar visita em cliente.' },
+        { title: 'Negócio organizado', desc: 'Pedidos, clientes e caixa num lugar só, sem planilha solta.' },
+        { title: 'Atendimento automático', desc: 'Responde seus clientes no WhatsApp 24h, mesmo fora do horário.' },
+        { title: 'Tudo conectado', desc: 'Seus programas conversando entre si, sem digitar a mesma coisa duas vezes.' },
       ],
     },
     card2: {
@@ -84,8 +108,8 @@ export const translations: Record<Language, Translation> = {
       ],
     },
     card3: {
-      cta: 'Do site à automação, dá uma olhada em tudo que já resolvemos por aí — e no que podemos resolver por você. Role pra conhecer.',
-      tags: ['Sites', 'Sistemas', 'Automação com IA', 'Integrações'],
+      cta: 'Este site inteiro foi feito por nós. Role e veja como a gente pode fazer o mesmo pelo seu negócio.',
+      tags: ['Sites', 'Organização', 'Atendimento', 'Tudo conectado'],
     },
     telas: {
       sobre: {
@@ -140,25 +164,34 @@ export const translations: Record<Language, Translation> = {
       inicio: 'Início',
       solucoes: 'Soluções',
       equipe: 'A equipe',
-      portfolio: 'Portfólio',
+      naPratica: 'Na prática',
       anterior: 'Bloco anterior',
       proximo: 'Próximo bloco',
     },
   },
   en: {
+    meta: {
+      title: 'WMC Tech — Websites and automatic customer service for small businesses',
+      description:
+        'We build your company website and automatic customer service, with the deadline and price in writing and everything explained without jargon. Free quote.',
+    },
+    whatsapp: {
+      label: 'Chat on WhatsApp',
+      mensagem: 'Hi! I saw the WMC Tech website and would like a quote.',
+    },
     hero: {
-      eyebrow: 'Web Development · Automation · AI',
-      subtitle: 'Custom web solutions to help your business sell and grow more.',
-      support: 'Sites, systems and automations ready to sell for you — from first contact to after-sales.',
+      eyebrow: 'Websites · Organization · Automatic customer service',
+      subtitle: 'We build your company website and automatic customer service, so you sell more without working more.',
+      support: 'You tell us what you need, we take care of everything — and explain each step in plain language.',
       badge: 'Projects delivered all across Brazil',
     },
     card1: {
-      intro: 'WMC Tech solves every kind of digital need your business has:',
+      intro: 'WMC Tech solves your business’s digital problems, without you having to understand technology:',
       bullets: [
-        { title: 'Landing Pages & Websites', desc: 'Fast, optimized pages built to convert.' },
-        { title: 'Custom Systems', desc: 'Dashboards and platforms built to measure.' },
-        { title: 'AI Automation', desc: 'Smart support and workflows, 24/7.' },
-        { title: 'Integrations', desc: 'Systems and channels in a single flow.' },
+        { title: 'A website that sells', desc: 'Fast, good-looking pages built to turn visitors into customers.' },
+        { title: 'A business in order', desc: 'Orders, customers and cash in one place — no more loose spreadsheets.' },
+        { title: 'Automatic customer service', desc: 'Answers your customers on WhatsApp 24/7, even outside business hours.' },
+        { title: 'Everything connected', desc: 'Your programs talking to each other, so nobody types the same thing twice.' },
       ],
     },
     card2: {
@@ -172,8 +205,8 @@ export const translations: Record<Language, Translation> = {
       ],
     },
     card3: {
-      cta: "From websites to automation, take a look at everything we've already solved — and what we can solve for you. Scroll to explore.",
-      tags: ['Websites', 'Systems', 'AI Automation', 'Integrations'],
+      cta: 'This entire website was built by us. Scroll and see how we can do the same for your business.',
+      tags: ['Websites', 'Organization', 'Customer service', 'Everything connected'],
     },
     telas: {
       sobre: {
@@ -228,25 +261,34 @@ export const translations: Record<Language, Translation> = {
       inicio: 'Start',
       solucoes: 'Solutions',
       equipe: 'The team',
-      portfolio: 'Portfolio',
+      naPratica: 'In practice',
       anterior: 'Previous section',
       proximo: 'Next section',
     },
   },
   es: {
+    meta: {
+      title: 'WMC Tech — Sitios web y atención automática para pequeños negocios',
+      description:
+        'Creamos el sitio web y la atención automática de tu empresa, con plazo y precio por escrito y todo explicado sin tecnicismos. Presupuesto sin compromiso.',
+    },
+    whatsapp: {
+      label: 'Hablar por WhatsApp',
+      mensagem: '¡Hola! Vi el sitio de WMC Tech y me gustaría un presupuesto.',
+    },
     hero: {
-      eyebrow: 'Desarrollo web · Automatización · IA',
-      subtitle: 'Soluciones web a medida para que tu negocio venda y crezca más.',
-      support: 'Sitios, sistemas y automatizaciones listos para vender por ti — desde el primer contacto hasta la posventa.',
+      eyebrow: 'Sitios web · Organización · Atención automática',
+      subtitle: 'Creamos el sitio web y la atención automática de tu empresa, para que vendas más sin trabajar más.',
+      support: 'Tú nos cuentas lo que necesitas, nosotros nos ocupamos de todo — y explicamos cada paso en lenguaje claro.',
       badge: 'Proyectos entregados en todo Brasil',
     },
     card1: {
-      intro: 'WMC Tech resuelve todo tipo de necesidad digital de tu negocio:',
+      intro: 'WMC Tech resuelve los problemas digitales de tu negocio, sin que tengas que entender de tecnología:',
       bullets: [
-        { title: 'Landing Pages y Sitios', desc: 'Páginas rápidas y optimizadas para convertir.' },
-        { title: 'Creación de Sistemas', desc: 'Paneles y plataformas a medida.' },
-        { title: 'Automatización con IA', desc: 'Atención y flujos inteligentes 24h.' },
-        { title: 'Integraciones', desc: 'Sistemas y canales en un solo flujo.' },
+        { title: 'Un sitio que vende', desc: 'Páginas rápidas y bonitas, hechas para convertir visitas en clientes.' },
+        { title: 'Negocio organizado', desc: 'Pedidos, clientes y caja en un solo lugar, sin planillas sueltas.' },
+        { title: 'Atención automática', desc: 'Responde a tus clientes por WhatsApp 24h, incluso fuera del horario.' },
+        { title: 'Todo conectado', desc: 'Tus programas hablando entre sí, sin escribir lo mismo dos veces.' },
       ],
     },
     card2: {
@@ -260,8 +302,8 @@ export const translations: Record<Language, Translation> = {
       ],
     },
     card3: {
-      cta: 'Del sitio a la automatización, echa un vistazo a todo lo que ya resolvimos por ahí — y a lo que podemos resolver por ti. Desplázate para conocer.',
-      tags: ['Sitios', 'Sistemas', 'Automatización con IA', 'Integraciones'],
+      cta: 'Este sitio entero lo hicimos nosotros. Desplázate y mira cómo podemos hacer lo mismo por tu negocio.',
+      tags: ['Sitios', 'Organización', 'Atención', 'Todo conectado'],
     },
     telas: {
       sobre: {
@@ -316,7 +358,7 @@ export const translations: Record<Language, Translation> = {
       inicio: 'Inicio',
       solucoes: 'Soluciones',
       equipe: 'El equipo',
-      portfolio: 'Portafolio',
+      naPratica: 'En la práctica',
       anterior: 'Bloque anterior',
       proximo: 'Bloque siguiente',
     },

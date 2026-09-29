@@ -1,4 +1,4 @@
-import { createContext, useContext, useMemo, useState, type ReactNode } from 'react';
+import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
 import { translations, type Language, type Translation } from '../i18n/translations';
 
 const STORAGE_KEY = 'wmc-lang';
@@ -29,6 +29,20 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
       // ainda funciona nessa sessão, só não persiste entre visitas
     }
   };
+
+  // mantém o que o navegador e os leitores de tela enxergam alinhado com o
+  // idioma na tela: sem isso o <html lang="pt-BR"> ficava mentindo quando o
+  // visitante trocava pra inglês, e o leitor de tela lia o texto com o
+  // sotaque errado
+  useEffect(() => {
+    const t = translations[language];
+    const htmlLang: Record<Language, string> = { pt: 'pt-BR', en: 'en', es: 'es' };
+    document.documentElement.lang = htmlLang[language];
+    document.title = t.meta.title;
+    document
+      .querySelector('meta[name="description"]')
+      ?.setAttribute('content', t.meta.description);
+  }, [language]);
 
   const value = useMemo<LanguageContextValue>(
     () => ({ language, setLanguage, t: translations[language] }),

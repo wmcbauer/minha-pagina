@@ -1,4 +1,4 @@
-import { useMemo, useRef } from 'react';
+import { Suspense, useMemo, useRef, useState } from 'react';
 import { useFrame } from '@react-three/fiber';
 import { useScroll, Points, PointMaterial, useVideoTexture } from '@react-three/drei';
 import * as THREE from 'three';
@@ -245,6 +245,42 @@ function ScreenNode({ index }: { index: number }) {
         <lineBasicMaterial ref={edgeMatRef} color={node.color} transparent opacity={0} />
       </lineSegments>
     </group>
+  );
+}
+
+/**
+ * Quanto ANTES da chegada (em segmentos de scroll) o vídeo começa a baixar.
+ * Dois segmentos dá tempo do arquivo chegar antes de a energia bater na tela,
+ * sem ter que baixar os quatro vídeos (~16MB) só pra abrir a página — antes,
+ * todos eram pedidos no carregamento, junto com o resto.
+ */
+const VIDEO_ANTECEDENCIA_SEGMENTOS = 2;
+
+/**
+ * Só monta (e portanto só baixa) o vídeo quando o scroll chega perto da tela
+ * dele. Uma vez montado, fica — desmontar e remontar rebaixaria o arquivo.
+ *
+ * O <Suspense> é PRÓPRIO de cada vídeo de propósito: `useVideoTexture`
+ * suspende enquanto carrega, e sem uma fronteira aqui a suspensão subiria
+ * até a do Canvas e esconderia a cena inteira até o arquivo terminar.
+ */
+function VideoScreenGate({ index }: { index: number }) {
+  const scroll = useScroll();
+  const [perto, setPerto] = useState(false);
+  const segCount = SCENE_NODES.length - 1;
+  const limiar = index / segCount - VIDEO_ANTECEDENCIA_SEGMENTOS / segCount;
+
+  useFrame(() => {
+    if (perto) return;
+    const offset = Number.isFinite(scroll.offset) ? scroll.offset : 0;
+    if (offset >= limiar) setPerto(true);
+  });
+
+  if (!perto) return null;
+  return (
+    <Suspense fallback={null}>
+      <VideoScreenNode index={index} />
+    </Suspense>
   );
 }
 
@@ -609,7 +645,7 @@ export default function ChipScene() {
         if (!n.position) return null; // hero e apresentação não têm tela — só a câmera passa por eles
         return (
           <group key={n.id}>
-            {n.video ? <VideoScreenNode index={index} /> : <ScreenNode index={index} />}
+            {n.video ? <VideoScreenGate index={index} /> : <ScreenNode index={index} />}
             <DataTrail index={index} velocityRef={velocityRef} directionRef={directionRef} />
           </group>
         );

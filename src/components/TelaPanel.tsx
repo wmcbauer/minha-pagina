@@ -3,6 +3,8 @@ import ScrambleText from './ScrambleText';
 import { useLanguage } from '../hooks/useLanguage';
 import type { TelaKey } from '../i18n/translations';
 import type { PanelSide } from '../three/nodesConfig';
+import { whatsappUrl } from '../config/contact';
+import { registrarEvento } from '../lib/analytics';
 
 export interface TelaPanelHandle {
   getElement: () => HTMLDivElement | null;
@@ -16,9 +18,9 @@ export interface TelaPanelHandle {
 
 const TelaPanel = forwardRef<
   TelaPanelHandle,
-  { panelKey: TelaKey; side: PanelSide; ctaHref?: string }
+  { panelKey: TelaKey; side: PanelSide }
 >(
-  function TelaPanel({ panelKey, side, ctaHref }, ref) {
+  function TelaPanel({ panelKey, side }, ref) {
     const { t } = useLanguage();
     const panel = t.telas[panelKey];
     const rootRef = useRef<HTMLDivElement>(null);
@@ -68,9 +70,9 @@ const TelaPanel = forwardRef<
     return (
       <div ref={rootRef} className={`tela-panel tela-panel--${side}`} style={{ opacity: 0 }}>
         <ScrambleText as="div" className="tela-panel-eyebrow" text={panel.eyebrow} duration={430} />
-        <h3 className="tela-panel-heading">
+        <h2 className="tela-panel-heading">
           <ScrambleText text={panel.heading} duration={620} />
-        </h3>
+        </h2>
         <div className="tela-panel-topics">
           {panel.topics.map((topic, i) => (
             // a chave é o índice de propósito: a lista tem tamanho e ordem
@@ -89,8 +91,15 @@ const TelaPanel = forwardRef<
             </div>
           ))}
         </div>
-        {panel.cta && ctaHref && (
-          <a className="tela-panel-cta" href={ctaHref} target="_blank" rel="noreferrer" aria-label={panel.cta}>
+        {panel.cta && (
+          <a
+            className="tela-panel-cta"
+            href={whatsappUrl(t.whatsapp.mensagem)}
+            target="_blank"
+            rel="noreferrer"
+            aria-label={panel.cta}
+            onClick={() => registrarEvento('whatsapp_contato')}
+          >
             <ScrambleText text={panel.cta} duration={430} />
           </a>
         )}
