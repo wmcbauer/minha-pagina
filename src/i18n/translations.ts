@@ -34,7 +34,6 @@ export interface Translation {
   hero: {
     eyebrow: string;
     subtitle: string;
-    support: string;
     badge: string;
   };
   card1: {
@@ -84,8 +83,7 @@ export const translations: Record<Language, Translation> = {
     },
     hero: {
       eyebrow: 'Sites · Organização · Atendimento automático',
-      subtitle: 'Criamos o site e o atendimento automático da sua empresa, pra você vender mais sem trabalhar mais.',
-      support: 'Você conta o que precisa, a gente cuida de tudo — e explica cada passo em português claro.',
+      subtitle: 'Mais clientes e menos trabalho pra você.',
       badge: 'Projetos entregues em todo o Brasil',
     },
     card1: {
@@ -181,8 +179,7 @@ export const translations: Record<Language, Translation> = {
     },
     hero: {
       eyebrow: 'Websites · Organization · Automatic customer service',
-      subtitle: 'We build your company website and automatic customer service, so you sell more without working more.',
-      support: 'You tell us what you need, we take care of everything — and explain each step in plain language.',
+      subtitle: 'More customers, less work for you.',
       badge: 'Projects delivered all across Brazil',
     },
     card1: {
@@ -278,8 +275,7 @@ export const translations: Record<Language, Translation> = {
     },
     hero: {
       eyebrow: 'Sitios web · Organización · Atención automática',
-      subtitle: 'Creamos el sitio web y la atención automática de tu empresa, para que vendas más sin trabajar más.',
-      support: 'Tú nos cuentas lo que necesitas, nosotros nos ocupamos de todo — y explicamos cada paso en lenguaje claro.',
+      subtitle: 'Más clientes y menos trabajo para ti.',
       badge: 'Proyectos entregados en todo Brasil',
     },
     card1: {

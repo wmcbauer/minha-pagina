@@ -6,7 +6,8 @@
 <title>WMC Tech — Sites e atendimento automático para pequenos negócios</title>
 <meta name="description" content="Criamos o site e o atendimento automático da sua empresa, com prazo e valor por escrito e tudo explicado sem jargão. Orçamento sem compromisso.">
 <meta name="theme-color" content="#050810">
-<link rel="icon" href="/assets/logo.png">
+<link rel="icon" type="image/svg+xml" href="/assets/logo-icon.svg">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
 
 <!-- Prévia ao compartilhar (WhatsApp, Instagram, Facebook, LinkedIn). Os
      robôs dessas redes NÃO executam JavaScript: só leem este HTML estático,
@@ -36,24 +37,13 @@
   "@type": "ProfessionalService",
   "name": "WMC Tech",
   "url": "https://wmcdevfrontend.tech/",
-  "logo": "https://wmcdevfrontend.tech/assets/logo.png",
+  "logo": "https://wmcdevfrontend.tech/assets/logo-icon.png",
   "image": "https://wmcdevfrontend.tech/og-image.png",
   "description": "Criamos o site e o atendimento automático da sua empresa, com prazo e valor por escrito e tudo explicado sem jargão.",
   "telephone": "+55-11-91793-0168",
   "areaServed": "BR",
   "availableLanguage": ["pt-BR", "en", "es"]
 }
-</script>
-
-<!-- Quem já escolheu inglês ou espanhol não deve ver, nem por um instante, o
-     texto estático em português abaixo: marca o <html> antes da primeira
-     pintura pra escondê-lo (o React mostra a versão no idioma certo logo
-     em seguida). -->
-<script>
-  try {
-    var l = localStorage.getItem('wmc-lang');
-    if (l === 'en' || l === 'es') document.documentElement.classList.add('boot-oculto');
-  } catch (e) {}
 </script>
 
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
@@ -64,8 +54,8 @@
 <!-- Primeira pintura: aparece na hora, antes de qualquer JavaScript, e é o
      que buscadores e quem está sem JS enxergam. O React troca este bloco pelo
      componente BootScreen (src/components/BootScreen.tsx), que é IDÊNTICO —
-     mantenha os dois em sincronia (texto em português = translations.pt.hero). -->
-<div id="root"><div class="boot"><div class="boot-inner"><img class="boot-logo" src="/assets/logo.png" alt="WMC Tech" width="909" height="327"><h1 class="boot-title">Criamos o site e o atendimento automático da sua empresa, pra você vender mais sem trabalhar mais.</h1><p class="boot-support">Você conta o que precisa, a gente cuida de tudo — e explica cada passo em português claro.</p></div></div></div>
+     mantenha os dois em sincronia (h1 em português = translations.pt.hero.subtitle). -->
+<div id="root"><div class="boot"><div class="boot-inner"><img class="boot-mark" src="/assets/logo-mark.svg" alt="" width="84" height="84"><h1 class="sr-only">Mais clientes e menos trabalho pra você.</h1></div></div></div>
 <noscript>
   <p style="position:fixed;left:0;right:0;bottom:1.5rem;text-align:center;color:#eef2f6;font-family:sans-serif">
     Este site precisa de JavaScript para a experiência completa.

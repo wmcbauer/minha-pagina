@@ -957,7 +957,15 @@ export default function Experience3D({ onPronto }: { onPronto?: () => void }) {
             const margemBase = compactoRef.current ? 76 : 24;
             const minCentro = alturaPainel / 2 + margemTopo;
             const maxCentro = alturaJanela - alturaPainel / 2 - margemBase;
-            const desejado = compactoRef.current ? alturaJanela * 0.72 : screen.y;
+            // Sem tela (`semTela`, o Contato) não há nada acima pra o texto
+            // ficar abaixo: ele vai no meio da janela, no celular e no
+            // desktop. Nas demais, no layout compacto o texto ocupa a faixa de
+            // baixo, sob a tela.
+            const desejado = node.semTela
+              ? alturaJanela / 2
+              : compactoRef.current
+                ? alturaJanela * 0.72
+                : screen.y;
             // se nem assim cabe (janela muito baixa), centraliza — o painel
             // tem max-height e rola por dentro (ver CSS)
             const top = minCentro <= maxCentro
