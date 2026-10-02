@@ -1,5 +1,5 @@
 /** Número do WhatsApp da empresa: só dígitos, com código do país (55) e DDD. */
-export const WHATSAPP_NUMBER = '5511917930168';
+const WHATSAPP_NUMBER = '5511917930168';
 
 /**
  * Link de conversa no WhatsApp. Com `mensagem`, ela chega pré-preenchida no

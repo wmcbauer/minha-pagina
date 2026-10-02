@@ -3,7 +3,7 @@ import type { TelaKey } from '../i18n/translations';
 
 export type PanelSide = 'left' | 'right' | 'center';
 
-export interface SceneNode {
+interface SceneNode {
   id: string;
   /** posição do "nó" (tela) no espaço 3D — null para o hero (é o próprio chip) */
   position: THREE.Vector3 | null;

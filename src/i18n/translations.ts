@@ -4,12 +4,12 @@ export type Language = 'pt' | 'en' | 'es';
  * (nodesConfig.ts) ao texto traduzido daqui. */
 export type TelaKey = 'sobre' | 'servicos' | 'processo' | 'projetos' | 'contato';
 
-export interface PanelTopic {
+interface PanelTopic {
   title: string;
   desc: string;
 }
 
-export interface TelaPanelContent {
+interface TelaPanelContent {
   eyebrow: string;
   heading: string;
   topics: PanelTopic[];

@@ -5,12 +5,12 @@ import TextArrivalCardSide from './TextArrivalCardSide';
 import ScrambleText from './ScrambleText';
 import { useLanguage } from '../hooks/useLanguage';
 
-export interface PresentationBlockRefs {
+interface PresentationBlockRefs {
   block: RefObject<HTMLDivElement>;
   card: RefObject<EnergyCardHandle>;
 }
 
-export interface PresentationRefs {
+interface PresentationRefs {
   resumo: PresentationBlockRefs;
   quemSomos: PresentationBlockRefs;
   transicao: PresentationBlockRefs;
