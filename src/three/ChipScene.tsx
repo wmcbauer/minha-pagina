@@ -645,7 +645,9 @@ export default function ChipScene() {
         if (!n.position) return null; // hero e apresentação não têm tela — só a câmera passa por eles
         return (
           <group key={n.id}>
-            {n.video ? <VideoScreenGate index={index} /> : <ScreenNode index={index} />}
+            {/* `semTela`: o nó existe (a energia chega nele e o texto se
+                posiciona por ele), mas não desenha placa nem borda */}
+            {n.semTela ? null : n.video ? <VideoScreenGate index={index} /> : <ScreenNode index={index} />}
             <DataTrail index={index} velocityRef={velocityRef} directionRef={directionRef} />
           </group>
         );

@@ -16,12 +16,17 @@ export interface SceneNode {
   /** vídeo exibido NA tela (em vez do painel escuro) — acende como uma TV
    * quando a energia chega nela (ver VideoScreenNode em ChipScene.tsx) */
   video?: string;
+  /** não desenha a tela (nem a borda): só fica o ponto onde a energia chega e
+   * onde o painel de texto se posiciona. Usado no fecho do site, onde o texto
+   * sozinho, sobre o fundo escuro, lê melhor do que sobre qualquer placa. */
+  semTela?: boolean;
   /** onde fica o painel de texto dessa tela.
    * 'left'/'right': ao LADO da tela, que fica do lado oposto (ver AIM) e
    * gira pra encarar esse lado (ver NODE_ROTATION_Y em ChipScene.tsx).
    * 'center': DENTRO da tela — ela vem centralizada e de frente (sem giro,
-   * senão o texto 2D não acompanharia a perspectiva do plano 3D), e o vídeo
-   * por trás escurece pra não competir com a leitura. */
+   * senão o texto 2D não acompanharia a perspectiva do plano 3D), e o fundo
+   * por trás (vídeo escurecido) fica discreto pra não competir com a
+   * leitura. Combinado com `semTela`, não há tela nenhuma: só o texto. */
   panelSide?: PanelSide;
 }
 
@@ -90,8 +95,11 @@ export const SCENE_NODES: SceneNode[] = [
     // Em z=-24, e não -30, pra manter o passo de ~6 un entre cenas: sem a
     // "projetos" no meio, um salto de 12 un seria percorrido no MESMO scroll
     // de um de 6 e o trecho final passaria voando.
+    // Sem tela de propósito (nem vídeo, nem placa): o texto do contato é o
+    // conteúdo, e ele lê melhor direto sobre o fundo escuro do que sobre
+    // qualquer superfície atrás dele.
     id: 'contato', position: V(0, 0, -24), camPos: V(0, 0.12, -21.58), lookAt: V(0, 0, -24), color: '#8fc3f0',
-    video: '/assets/video-contato.mp4',
+    semTela: true,
     panelSide: 'center',
     panelKey: 'contato',
   },
