@@ -1,5 +1,6 @@
 import type { RefObject } from 'react';
 import LogoEnergyFrame from './LogoEnergyFrame';
+import { Logo } from './Logo';
 import ScrambleText from './ScrambleText';
 import type { EnergyCardHandle } from './EnergyCard';
 import { useLanguage } from '../hooks/useLanguage';
@@ -26,7 +27,7 @@ export default function Hero({
             desce o feixe até o texto */}
         <LogoEnergyFrame ref={logoCardRef} className="pres-card--logo">
           <span className="hero-logo-wrap">
-            <img className="hero-logo-img" src="/assets/logo.svg" alt="WMC Tech" width={250} height={104} />
+            <Logo className="hero-logo-img" />
           </span>
           <ScrambleText as="h1" className="hero-sub" text={t.hero.subtitle} delay={620} duration={680} />
         </LogoEnergyFrame>

@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useLanguage } from '../hooks/useLanguage';
+import { LogoMark } from './Logo';
 
 /**
  * Tela de abertura: só o selo da marca pulsando enquanto a experiência 3D
@@ -28,7 +29,7 @@ export default function BootScreen({ escondido }: { escondido: boolean }) {
   return (
     <div className={`boot${escondido ? ' boot--fora' : ''}`} aria-hidden={escondido || undefined}>
       <div className="boot-inner">
-        <img className="boot-mark" src="/assets/logo-mark.svg" alt="" width={84} height={84} />
+        <LogoMark className="boot-mark" />
         <h1 className="sr-only">{t.hero.subtitle}</h1>
       </div>
     </div>

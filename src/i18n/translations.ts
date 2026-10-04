@@ -31,6 +31,11 @@ export interface Translation {
     label: string;
     mensagem: string;
   };
+  /** botão sol/lua: o nome acessível diz pra qual tema ele leva */
+  tema: {
+    paraClaro: string;
+    paraEscuro: string;
+  };
   hero: {
     eyebrow: string;
     subtitle: string;
@@ -81,6 +86,7 @@ export const translations: Record<Language, Translation> = {
       label: 'Falar no WhatsApp',
       mensagem: 'Olá! Vi o site da WMC Tech e gostaria de um orçamento.',
     },
+    tema: { paraClaro: 'Mudar para o tema claro', paraEscuro: 'Mudar para o tema escuro' },
     hero: {
       eyebrow: 'Sites · Organização · Atendimento automático',
       subtitle: 'Mais clientes e menos trabalho pra você.',
@@ -177,6 +183,7 @@ export const translations: Record<Language, Translation> = {
       label: 'Chat on WhatsApp',
       mensagem: 'Hi! I saw the WMC Tech website and would like a quote.',
     },
+    tema: { paraClaro: 'Switch to light theme', paraEscuro: 'Switch to dark theme' },
     hero: {
       eyebrow: 'Websites · Organization · Automatic customer service',
       subtitle: 'More customers, less work for you.',
@@ -273,6 +280,7 @@ export const translations: Record<Language, Translation> = {
       label: 'Hablar por WhatsApp',
       mensagem: '¡Hola! Vi el sitio de WMC Tech y me gustaría un presupuesto.',
     },
+    tema: { paraClaro: 'Cambiar al tema claro', paraEscuro: 'Cambiar al tema oscuro' },
     hero: {
       eyebrow: 'Sitios web · Organización · Atención automática',
       subtitle: 'Más clientes y menos trabajo para ti.',

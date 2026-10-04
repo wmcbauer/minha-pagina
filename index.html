@@ -6,6 +6,17 @@
 <title>WMC Tech — Sites e atendimento automático para pequenos negócios</title>
 <meta name="description" content="Criamos o site e o atendimento automático da sua empresa, com prazo e valor por escrito e tudo explicado sem jargão. Orçamento sem compromisso.">
 <meta name="theme-color" content="#050810">
+<!-- Tema: define data-theme ANTES da primeira pintura (senão quem escolheu o
+     claro veria um clarão escuro a cada visita). Sem escolha salva, o padrão
+     é o escuro — é o visual de marca do site. Lógica em src/lib/theme.ts. -->
+<script>
+  try {
+    if (localStorage.getItem('wmc-theme') === 'light') {
+      document.documentElement.dataset.theme = 'light';
+      document.querySelector('meta[name="theme-color"]').setAttribute('content', '#f3f7fc');
+    }
+  } catch (e) {}
+</script>
 <link rel="icon" type="image/svg+xml" href="/assets/logo-icon.svg">
 <link rel="apple-touch-icon" href="/apple-touch-icon.png">
 
@@ -55,7 +66,7 @@
      que buscadores e quem está sem JS enxergam. O React troca este bloco pelo
      componente BootScreen (src/components/BootScreen.tsx), que é IDÊNTICO —
      mantenha os dois em sincronia (h1 em português = translations.pt.hero.subtitle). -->
-<div id="root"><div class="boot"><div class="boot-inner"><img class="boot-mark" src="/assets/logo-mark.svg" alt="" width="84" height="84"><h1 class="sr-only">Mais clientes e menos trabalho pra você.</h1></div></div></div>
+<div id="root"><div class="boot"><div class="boot-inner"><svg class="boot-mark" viewBox="0 0 100 100" width="84" height="84" fill="none" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path class="logo-anel" d="M74.5 29.4 A32 32 0 1 0 74.5 70.6" stroke-width="7.5"/><path class="logo-w" d="M33 39 L41.5 64 L50 49 L58.5 64 L67 39" stroke-width="7.5"/><circle class="logo-ponto" cx="74.5" cy="29.4" r="7"/></svg><h1 class="sr-only">Mais clientes e menos trabalho pra você.</h1></div></div></div>
 <noscript>
   <p style="position:fixed;left:0;right:0;bottom:1.5rem;text-align:center;color:#eef2f6;font-family:sans-serif">
     Este site precisa de JavaScript para a experiência completa.

@@ -83,7 +83,7 @@ export function applyBeam(
     refs.line.current.style.transform = `rotate(${angle}deg)`;
     // a cauda só brilha forte enquanto o scroll está se movendo de verdade
     refs.line.current.style.opacity = String(beamVisible * (0.25 + activeVelocity * 0.75) * distanceFade);
-    refs.line.current.style.filter = `brightness(${brightBoost})`;
+    refs.line.current.style.filter = `brightness(calc(1 + ${brightBoost - 1} * var(--flash-k)))`;
   }
   if (refs.core.current) {
     const cx = start.x + dx * beamP;
@@ -91,7 +91,7 @@ export function applyBeam(
     refs.core.current.style.left = `${cx}px`;
     refs.core.current.style.top = `${cy}px`;
     refs.core.current.style.opacity = String(beamVisible * distanceFade);
-    refs.core.current.style.filter = `brightness(${brightBoost})`;
+    refs.core.current.style.filter = `brightness(calc(1 + ${brightBoost - 1} * var(--flash-k)))`;
     refs.core.current.style.transform = `translate(-50%, -50%) scale(${sizePulse})`;
   }
   if (refs.flash.current) {
@@ -228,14 +228,14 @@ export function applyCurvedBeam(
       refs.path.current.setAttribute('d', `M ${p0.x} ${p0.y} L ${p0.x} ${p0.y}`);
     }
     refs.path.current.style.opacity = String(beamVisible * (0.25 + activeVelocity * 0.75));
-    refs.path.current.style.filter = `brightness(${brightBoost})`;
+    refs.path.current.style.filter = `brightness(calc(1 + ${brightBoost - 1} * var(--flash-k)))`;
   }
   if (refs.core.current) {
     const c = bezierPoint(p0, control, p2, beamP);
     refs.core.current.style.left = `${c.x}px`;
     refs.core.current.style.top = `${c.y}px`;
     refs.core.current.style.opacity = String(beamVisible);
-    refs.core.current.style.filter = `brightness(${brightBoost})`;
+    refs.core.current.style.filter = `brightness(calc(1 + ${brightBoost - 1} * var(--flash-k)))`;
     refs.core.current.style.transform = `translate(-50%, -50%) scale(${sizePulse})`;
   }
   if (refs.flash.current) {
@@ -260,6 +260,6 @@ export function projectPoint(scratch: THREE.Vector3, source: THREE.Vector3, came
 export function applyTextEnergize(el: HTMLDivElement | null, flashP: number) {
   if (!el) return;
   el.style.filter = flashP > 0.01
-    ? `brightness(${1 + flashP * 0.5}) drop-shadow(0 0 ${flashP * 16}px rgba(143,195,240,${flashP * 0.8}))`
+    ? `brightness(calc(1 + ${flashP * 0.5} * var(--flash-k))) drop-shadow(0 0 ${flashP * 16}px rgba(var(--accent-rgb),calc(${flashP * 0.8} * var(--flash-k))))`
     : '';
 }

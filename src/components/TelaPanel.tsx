@@ -50,7 +50,7 @@ const TelaPanel = forwardRef<
         // brilho passageiro de "energizado" — igual ao usado nos textos da
         // apresentação (applyTextEnergize em Experience3D.tsx)
         root.style.filter = flashP > 0.01
-          ? `brightness(${1 + flashP * 0.4}) drop-shadow(0 0 ${flashP * 14}px rgba(143,195,240,${flashP * 0.7}))`
+          ? `brightness(calc(1 + ${flashP * 0.4} * var(--flash-k))) drop-shadow(0 0 ${flashP * 14}px rgba(var(--accent-rgb),calc(${flashP * 0.7} * var(--flash-k))))`
           : '';
 
         // cada tópico entra com um pequeno atraso em relação ao anterior —

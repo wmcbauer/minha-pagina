@@ -1,5 +1,5 @@
 import { Suspense, useEffect, useRef } from 'react';
-import { Canvas } from '@react-three/fiber';
+import { Canvas, useThree } from '@react-three/fiber';
 import { ScrollControls } from '@react-three/drei';
 import { EffectComposer, Bloom } from '@react-three/postprocessing';
 import * as THREE from 'three';
@@ -15,6 +15,8 @@ import {
 import { pointAt, applyBeam, applyCurvedBeam, projectPoint, applyTextEnergize } from './beams';
 import { ScrollElCapture, ScrollOffsetCapture, CameraCapture } from './captures';
 import { clamp01, lerp, pulse } from '../lib/math';
+import { getTheme, registrarRenderizadorDaCena, useTheme } from '../lib/theme';
+import { CENA, useMudancaDeTema } from './sceneTheme';
 import Hero from '../components/Hero';
 import Presentation from '../components/Presentation';
 import TelaPanel, { type TelaPanelHandle } from '../components/TelaPanel';
@@ -40,8 +42,26 @@ const PANEL_GAP = 400;
 // texto passava por baixo dos nós da trilha
 const GUTTER_NAV = 64;
 
+/** Fundo e neblina da cena acompanham o tema. */
+function CenaTema() {
+  const scene = useThree((estado) => estado.scene);
+  const advance = useThree((estado) => estado.advance);
+  // deixa a troca de tema pedir um frame imediato (ver lib/theme.ts)
+  useEffect(() => {
+    registrarRenderizadorDaCena(() => advance(performance.now(), true));
+    return () => registrarRenderizadorDaCena(null);
+  }, [advance]);
+  useMudancaDeTema((tema) => {
+    const fundo = CENA[tema].fundo;
+    if (scene.background instanceof THREE.Color) scene.background.set(fundo);
+    scene.fog?.color.set(fundo);
+  });
+  return null;
+}
+
 export default function Experience3D({ onPronto }: { onPronto?: () => void }) {
   const { t } = useLanguage();
+  const tema = useTheme();
   // avisa o App que a experiência montou (a tela de abertura pode sair). Fica
   // num ref pra o efeito rodar UMA vez, sem depender da identidade da função.
   const onProntoRef = useRef(onPronto);
@@ -490,7 +510,11 @@ export default function Experience3D({ onPronto }: { onPronto?: () => void }) {
             // ALTURA REAL do painel: ele nunca invade a faixa do header/idioma
             // (em cima) nem o botão de WhatsApp (embaixo, maior no celular).
             const alturaPainel = el.offsetHeight;
-            const margemTopo = 84;
+            // no celular a trilha de navegação ocupa uma faixa horizontal no
+            // alto (`top: clamp(4.6rem, 12.5vh, 7rem)` em .scene-nav, index.css;
+            // 28px de altura), então o texto começa abaixo dela
+            const topoDaTrilha = Math.min(112, Math.max(73.6, alturaJanela * 0.125));
+            const margemTopo = window.innerWidth <= 620 ? topoDaTrilha + 28 + 12 : 84;
             const margemBase = compactoRef.current ? 76 : 24;
             const minCentro = alturaPainel / 2 + margemTopo;
             const maxCentro = alturaJanela - alturaPainel / 2 - margemBase;
@@ -538,8 +562,9 @@ export default function Experience3D({ onPronto }: { onPronto?: () => void }) {
         gl={{ antialias: true, powerPreference: 'high-performance' }}
         camera={{ fov: 55, position: [0, 0.4, 7], near: 0.1, far: 80 }}
       >
-        <color attach="background" args={['#050810']} />
-        <fog attach="fog" args={['#050810', 10, 34]} />
+        <color attach="background" args={[CENA[getTheme()].fundo]} />
+        <fog attach="fog" args={[CENA[getTheme()].fundo, 10, 34]} />
+        <CenaTema />
         <ambientLight intensity={0.5} />
         <pointLight position={[0, 2, 4]} intensity={1.4} color="#8fc3f0" />
         <pointLight position={[-4, -2, -14]} intensity={0.8} color="#4a8fd4" />
@@ -551,7 +576,7 @@ export default function Experience3D({ onPronto }: { onPronto?: () => void }) {
             <ChipScene />
             <EffectComposer multisampling={0}>
               <Bloom
-                intensity={1.4}
+                intensity={CENA[tema].bloom}
                 luminanceThreshold={0.15}
                 luminanceSmoothing={0.3}
                 mipmapBlur
@@ -613,9 +638,9 @@ export default function Experience3D({ onPronto }: { onPronto?: () => void }) {
               na ponta antiga, opaco perto do ponto, igual ao gradiente das
               linhas retas (.pres-beam-line) e à cauda da trilha 3D */}
           <linearGradient ref={beam4Gradient} id="beam4TailGradient" gradientUnits="userSpaceOnUse">
-            <stop offset="0%" stopColor="rgba(143,195,240,0)" />
-            <stop offset="65%" stopColor="rgba(143,195,240,0.8)" />
-            <stop offset="100%" stopColor="#ffffff" />
+            <stop offset="0%" style={{ stopColor: 'rgba(var(--accent-rgb), 0)' }} />
+            <stop offset="65%" style={{ stopColor: 'rgba(var(--accent-rgb), 0.8)' }} />
+            <stop offset="100%" style={{ stopColor: 'var(--hot)' }} />
           </linearGradient>
         </defs>
         <path ref={beam4Path} className="pres-beam-curve" />

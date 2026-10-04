@@ -4,6 +4,8 @@ import { useScroll, Points, PointMaterial, useVideoTexture } from '@react-three/
 import * as THREE from 'three';
 import { SCENE_NODES, type PanelSide } from './nodesConfig';
 import { useCompactLayout } from '../hooks/useCompactLayout';
+import { getTheme } from '../lib/theme';
+import { CENA, corDeBorda, useMudancaDeTema } from './sceneTheme';
 
 /** Quanto a tela é girada — o sentido depende de cada nó (ver screenRotationY). */
 const NODE_ROTATION_Y = Math.PI / 6;
@@ -218,6 +220,10 @@ function ScreenNode({ index }: { index: number }) {
     if (edgeMatRef.current) edgeMatRef.current.opacity = visivel;
   });
 
+  useMudancaDeTema((tema) => {
+    edgeMatRef.current?.color.copy(corDeBorda(node.color, tema));
+  });
+
   if (!node.position) return null;
 
   const rotY = screenRotationY(node.panelSide, compacto);
@@ -351,6 +357,10 @@ function VideoScreenNode({ index }: { index: number }) {
     if (edgeMatRef.current) edgeMatRef.current.opacity = visivel;
   });
 
+  useMudancaDeTema((tema) => {
+    edgeMatRef.current?.color.copy(corDeBorda(node.color, tema));
+  });
+
   if (!node.position) return null;
 
   const rotY = screenRotationY(node.panelSide, compacto);
@@ -471,6 +481,16 @@ function DataTrail({
   const binormal = useMemo(() => new THREE.Vector3(), []);
   const scroll = useScroll();
   const segCount = SCENE_NODES.length - 1;
+
+  // no claro a cabeça e a cauda saem da mistura aditiva (que some em fundo
+  // claro) pra mistura normal, em azul escuro — ver three/sceneTheme.ts
+  useMudancaDeTema((tema) => {
+    for (const mat of [tailMatRef.current, haloMatRef.current, coreMatRef.current]) {
+      if (!mat) continue;
+      mat.blending = CENA[tema].blending;
+      mat.needsUpdate = true;
+    }
+  });
   // este trecho da viagem começa quando a cena anterior está ativa e termina
   // quando o scroll chega na cena de destino (index) — o feixe "chega" na
   // tela exatamente quando ela vira a cena atual.
@@ -478,6 +498,7 @@ function DataTrail({
   const segLen = 1 / segCount;
 
   useFrame((state) => {
+    const claro = getTheme() === 'light';
     const offset = Number.isFinite(scroll.offset) ? scroll.offset : 0;
     const t = THREE.MathUtils.clamp((offset - segStart) / segLen, 0, 1);
     const dir = directionRef.current;
@@ -519,11 +540,13 @@ function DataTrail({
       // não sobra vazio nem sobra ponto grudado sem motivo.
       const headVisible = activeVelocity;
       if (haloMatRef.current) {
-        haloMatRef.current.color.setScalar(brightBoost);
+        if (claro) haloMatRef.current.color.set(CENA.light.halo);
+        else haloMatRef.current.color.setScalar(brightBoost);
         haloMatRef.current.opacity = 0.85 * headVisible;
       }
       if (coreMatRef.current) {
-        coreMatRef.current.color.setScalar(brightBoost);
+        if (claro) coreMatRef.current.color.set(CENA.light.nucleo);
+        else coreMatRef.current.color.setScalar(brightBoost);
         coreMatRef.current.opacity = headVisible;
       }
 
@@ -574,8 +597,12 @@ function DataTrail({
     // empurrar o bloom)
     if (tailMatRef.current) {
       tailMatRef.current.opacity = activeVelocity;
-      const boost = 1 + activeVelocity * 1.6;
-      tailMatRef.current.color.setScalar(boost);
+      if (claro) {
+        tailMatRef.current.color.set(CENA.light.cauda);
+      } else {
+        const boost = 1 + activeVelocity * 1.6;
+        tailMatRef.current.color.setScalar(boost);
+      }
     }
   });
 
@@ -621,9 +648,16 @@ function Starfield() {
     return arr;
   }, []);
 
+  const matRef = useRef<THREE.PointsMaterial>(null);
+  useMudancaDeTema((tema) => {
+    if (!matRef.current) return;
+    matRef.current.color.set(CENA[tema].estrelas);
+    matRef.current.opacity = CENA[tema].estrelasOpacidade;
+  });
+
   return (
     <Points positions={positions} stride={3} frustumCulled={false}>
-      <PointMaterial transparent color="#8fc3f0" size={0.035} sizeAttenuation depthWrite={false} opacity={0.55} />
+      <PointMaterial ref={matRef} transparent color="#8fc3f0" size={0.035} sizeAttenuation depthWrite={false} opacity={0.55} />
     </Points>
   );
 }

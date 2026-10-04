@@ -6,13 +6,52 @@
  * esses tons aqui só duplicava a fonte da verdade sem nenhuma regra usá-los.
  */
 :root {
+  color-scheme: dark;
   --bg:          #050810;
-  --blue-light:  #8fc3f0;
+  --bg-rgb:      5, 8, 16;
+  --accent:      #8fc3f0;
+  --accent-rgb:  143, 195, 240;
+  --accent-soft-rgb: 122, 179, 232;   /* bordas e fundos suaves */
+  --accent-deep-rgb: 74, 143, 212;    /* brilhos ambiente e pé dos gradientes */
+  --accent-hover: #d6e8f8;
+  --on-accent:   #050810;             /* texto sobre fundo --accent */
+  --hot:         #ffffff;             /* ponta mais "quente" dos feixes */
+  --hot-mid:     #bfe3ff;
+  --hot-mid-rgb: 191, 227, 255;
+  --text:        #eef2f6;
   --silver:      #9aa7b8;
-  --white:       #eef2f6;
   --muted:       #7c8ba3;
+  --shade-rgb:   0, 0, 0;             /* sombras projetadas */
+  --shade-a:     0.5;
+  --flash-k:     1;                   /* força do brilho passageiro nos textos */
   --mono:        'DM Mono', monospace;
   --sans:        'Syne', sans-serif;
+}
+
+/* Tema claro ("branco gelado"). Mesmas variáveis, outros valores: o azul da
+   logo escurece pra ter contraste sobre fundo claro (≈5:1 com o texto) e a
+   ponta "quente" dos feixes, que no escuro é branca, vira azul-marinho —
+   branco sobre branco sumiria. A cena 3D lê estes mesmos valores em
+   three/sceneTheme.ts: se mudar uma cor aqui, mude lá também. */
+:root[data-theme='light'] {
+  color-scheme: light;
+  --bg:          #f3f7fc;
+  --bg-rgb:      243, 247, 252;
+  --accent:      #2a6db5;
+  --accent-rgb:  42, 109, 181;
+  --accent-soft-rgb: 42, 109, 181;
+  --accent-deep-rgb: 26, 86, 150;
+  --accent-hover: #1d5aa0;
+  --on-accent:   #ffffff;
+  --hot:         #0a2a52;
+  --hot-mid:     #5a9ad8;
+  --hot-mid-rgb: 90, 154, 216;
+  --text:        #0b1a2e;
+  --silver:      #44566e;
+  --muted:       #5b6b82;
+  --shade-rgb:   15, 35, 65;
+  --shade-a:     0.22;
+  --flash-k:     0.3;                 /* brilho sobre fundo claro vira névoa: bem mais fraco */
 }
 
 * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -24,7 +63,7 @@ html, body {
 }
 
 body {
-  color: var(--white);
+  color: var(--text);
   font-family: var(--sans);
 }
 
@@ -42,14 +81,39 @@ img { display: block; max-width: 100%; }
   right: 1.4rem;
   z-index: 20;
   pointer-events: none;
+  display: flex;
+  align-items: stretch;
+  gap: 0.4rem;
+}
+
+/* botão sol/lua — mesmo vocabulário visual do seletor de idioma */
+.theme-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.35rem;
+  border: 1px solid rgba(var(--accent-soft-rgb), 0.18);
+  background: rgba(var(--bg-rgb), 0.55);
+  backdrop-filter: blur(6px);
+  color: var(--accent);
+  pointer-events: auto;
+  transition: border-color 0.15s ease, background-color 0.15s ease;
+}
+.theme-toggle:hover {
+  border-color: rgba(var(--accent-soft-rgb), 0.35);
+  background: rgba(var(--accent-soft-rgb), 0.1);
+}
+.theme-toggle:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
 }
 
 .lang-switch {
   display: flex;
   gap: 0.25rem;
   padding: 0.3rem;
-  border: 1px solid rgba(122, 179, 232, 0.18);
-  background: rgba(5, 8, 16, 0.55);
+  border: 1px solid rgba(var(--accent-soft-rgb), 0.18);
+  background: rgba(var(--bg-rgb), 0.55);
   backdrop-filter: blur(6px);
   pointer-events: auto;
 }
@@ -69,13 +133,13 @@ img { display: block; max-width: 100%; }
 }
 
 .lang-option:hover {
-  color: var(--blue-light);
+  color: var(--accent);
 }
 
 .lang-option--active {
-  color: var(--blue-light);
-  border-color: rgba(122, 179, 232, 0.35);
-  background: rgba(122, 179, 232, 0.1);
+  color: var(--accent);
+  border-color: rgba(var(--accent-soft-rgb), 0.35);
+  background: rgba(var(--accent-soft-rgb), 0.1);
 }
 
 /*
@@ -110,7 +174,7 @@ img { display: block; max-width: 100%; }
 
 .scene-nav-step:hover {
   opacity: 1;
-  color: var(--blue-light);
+  color: var(--accent);
 }
 
 .scene-nav-rail {
@@ -133,15 +197,15 @@ img { display: block; max-width: 100%; }
   left: 50%;
   width: 1px;
   margin-left: -0.5px;
-  background: rgba(122, 179, 232, 0.18);
+  background: rgba(var(--accent-soft-rgb), 0.18);
   pointer-events: none;
 }
 
 .scene-nav-line--on {
-  background: linear-gradient(180deg, rgba(143, 195, 240, 0.85), rgba(74, 143, 212, 0.5));
+  background: linear-gradient(180deg, rgba(var(--accent-rgb), 0.85), rgba(var(--accent-deep-rgb), 0.5));
   transform-origin: top center;
-  transform: scaleY(0);
-  box-shadow: 0 0 6px rgba(143, 195, 240, 0.45);
+  transform: scaleY(var(--progresso, 0));
+  box-shadow: 0 0 6px rgba(var(--accent-rgb), 0.45);
 }
 
 .scene-nav-dot {
@@ -158,22 +222,22 @@ img { display: block; max-width: 100%; }
   width: 6px;
   height: 6px;
   border-radius: 50%;
-  border: 1px solid rgba(122, 179, 232, 0.5);
+  border: 1px solid rgba(var(--accent-soft-rgb), 0.5);
   background: var(--bg);
   transition: background-color 0.18s ease, border-color 0.18s ease,
     box-shadow 0.18s ease, transform 0.18s ease;
 }
 
 .scene-nav-dot:hover .scene-nav-dot-mark {
-  border-color: var(--blue-light);
+  border-color: var(--accent);
   transform: scale(1.25);
 }
 
 .scene-nav-dot--active .scene-nav-dot-mark {
-  background: var(--blue-light);
-  border-color: var(--blue-light);
+  background: var(--accent);
+  border-color: var(--accent);
   transform: scale(1.35);
-  box-shadow: 0 0 10px rgba(143, 195, 240, 0.8);
+  box-shadow: 0 0 10px rgba(var(--accent-rgb), 0.8);
 }
 
 /* o nome do bloco só aparece no hover/foco, à esquerda do nó — sem isso a
@@ -186,7 +250,7 @@ img { display: block; max-width: 100%; }
   font-size: 0.64rem;
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: var(--blue-light);
+  color: var(--accent);
   opacity: 0;
   transform: translateX(4px);
   pointer-events: none;
@@ -224,13 +288,13 @@ img { display: block; max-width: 100%; }
   gap: 0.55rem;
   padding: 0.75rem 1.3rem;
   border-radius: 999px;
-  background: var(--blue-light);
-  color: var(--bg);
+  background: var(--accent);
+  color: var(--on-accent);
   font-family: var(--sans);
   font-size: 0.9rem;
   font-weight: 700;
   letter-spacing: 0.01em;
-  box-shadow: 0 0 22px rgba(143, 195, 240, 0.45), 0 4px 14px rgba(0, 0, 0, 0.5);
+  box-shadow: 0 0 22px rgba(var(--accent-rgb), 0.45), 0 4px 14px rgba(var(--shade-rgb), var(--shade-a));
   transition: transform 0.15s ease, box-shadow 0.15s ease, background-color 0.15s ease;
 }
 
@@ -239,7 +303,7 @@ img { display: block; max-width: 100%; }
   position: absolute;
   inset: 0;
   border-radius: inherit;
-  border: 2px solid var(--blue-light);
+  border: 2px solid var(--accent);
   pointer-events: none;
   animation: whatsapp-pulso 2.8s ease-out 3s infinite;
 }
@@ -250,9 +314,9 @@ img { display: block; max-width: 100%; }
 }
 
 .whatsapp-fab:hover {
-  background: #d6e8f8;
+  background: var(--accent-hover);
   transform: translateY(-2px);
-  box-shadow: 0 0 30px rgba(143, 195, 240, 0.7), 0 6px 18px rgba(0, 0, 0, 0.5);
+  box-shadow: 0 0 30px rgba(var(--accent-rgb), 0.7), 0 6px 18px rgba(var(--shade-rgb), var(--shade-a));
 }
 
 .whatsapp-fab:hover::after {
@@ -261,7 +325,7 @@ img { display: block; max-width: 100%; }
 }
 
 .whatsapp-fab:focus-visible {
-  outline: 2px solid #ffffff;
+  outline: 2px solid var(--text);
   outline-offset: 3px;
 }
 
@@ -382,6 +446,7 @@ img { display: block; max-width: 100%; }
    claro atrás dela, não como brilho da forma. O PNG já traz o próprio
    brilho embutido. */
 .hero-logo-img {
+  display: block;
   width: 100%;
   height: auto;
   animation: logo-materializa 1.15s cubic-bezier(0.2, 0.7, 0.3, 1) 0.2s both;
@@ -417,7 +482,7 @@ img { display: block; max-width: 100%; }
   left: -5%;
   right: -5%;
   height: 2px;
-  background: linear-gradient(90deg, transparent, rgba(143, 195, 240, 0.85), transparent);
+  background: linear-gradient(90deg, transparent, rgba(var(--accent-rgb), 0.85), transparent);
   filter: blur(1px);
   opacity: 0;
   pointer-events: none;
@@ -438,7 +503,7 @@ img { display: block; max-width: 100%; }
   font-size: clamp(1.05rem, 3vw, 1.65rem);
   font-weight: 400;
   line-height: 1.55;
-  color: var(--blue-light);
+  color: var(--accent);
   letter-spacing: 0.06em;
   margin-top: 1.5rem;
 }
@@ -491,7 +556,7 @@ img { display: block; max-width: 100%; }
   position: absolute;
   inset: 0;
   pointer-events: none;
-  background: radial-gradient(ellipse 640px 520px at 50% 46%, rgba(74, 143, 212, 0.08), rgba(74, 143, 212, 0) 70%);
+  background: radial-gradient(ellipse 640px 520px at 50% 46%, rgba(var(--accent-deep-rgb), 0.08), rgba(var(--accent-deep-rgb), 0) 70%);
 }
 
 .hero-eyebrow {
@@ -509,12 +574,12 @@ img { display: block; max-width: 100%; }
   display: inline-flex;
   align-items: center;
   padding: 0.68rem 1.5rem;
-  border: 1px solid rgba(122, 179, 232, 0.28);
+  border: 1px solid rgba(var(--accent-soft-rgb), 0.28);
   border-radius: 999px;
   font-family: var(--mono);
   font-size: 1.17rem;
   letter-spacing: 0.06em;
-  color: var(--blue-light);
+  color: var(--accent);
 }
 
 /* indicador discreto de scroll — sem texto/botão (o "role para explorar"
@@ -533,7 +598,7 @@ img { display: block; max-width: 100%; }
   flex-direction: column;
   align-items: center;
   gap: 0.4rem;
-  color: var(--blue-light);
+  color: var(--accent);
   opacity: 0.5;
   pointer-events: none;
 }
@@ -546,7 +611,7 @@ img { display: block; max-width: 100%; }
 .hero-scroll-line {
   width: 1px;
   height: 28px;
-  background: linear-gradient(180deg, rgba(143, 195, 240, 0), currentColor);
+  background: linear-gradient(180deg, rgba(var(--accent-rgb), 0), currentColor);
 }
 
 /* texto real que fica no DOM pra leitor de tela e indexação enquanto a
@@ -643,10 +708,10 @@ img { display: block; max-width: 100%; }
   position: relative;
   max-width: 920px;
   padding: 3.6rem 4rem;
-  border: 1px solid rgba(122, 179, 232, 0.16);
+  border: 1px solid rgba(var(--accent-soft-rgb), 0.16);
   /* um pouco mais de opacidade — suaviza a transição de tom entre o
      interior do retângulo e o fundo escuro ao redor */
-  background: rgba(122, 179, 232, 0.07);
+  background: rgba(var(--accent-soft-rgb), 0.07);
 }
 
 /* a logo usa o mesmo retângulo de energia dos textos — mesmo "plano" visual —
@@ -664,13 +729,13 @@ img { display: block; max-width: 100%; }
 .pres-edge {
   position: absolute;
   pointer-events: none;
-  box-shadow: 0 0 8px rgba(143, 195, 240, 0.75);
+  box-shadow: 0 0 8px rgba(var(--accent-rgb), 0.75);
 }
 .pres-edge-top,
 .pres-edge-bottom {
   height: 2px;
   width: 0%;
-  background: linear-gradient(90deg, rgba(143, 195, 240, 0.9), #ffffff);
+  background: linear-gradient(90deg, rgba(var(--accent-rgb), 0.9), var(--hot));
 }
 /* só existe o lado direito aqui: o card 1 (EnergyCard) desenha um traço em
    L — topo, direita, base — nunca o lado esquerdo, então essa regra nunca
@@ -678,7 +743,7 @@ img { display: block; max-width: 100%; }
 .pres-edge-right {
   width: 2px;
   height: 0%;
-  background: linear-gradient(180deg, rgba(143, 195, 240, 0.9), #ffffff);
+  background: linear-gradient(180deg, rgba(var(--accent-rgb), 0.9), var(--hot));
 }
 .pres-edge-top { top: -1px; left: -1px; }
 .pres-edge-right { top: -1px; right: -1px; }
@@ -691,7 +756,7 @@ img { display: block; max-width: 100%; }
 .logo-edge {
   position: absolute;
   pointer-events: none;
-  box-shadow: 0 0 8px rgba(143, 195, 240, 0.75);
+  box-shadow: 0 0 8px rgba(var(--accent-rgb), 0.75);
   /* começa invisível — mesmo com 0% de altura/largura, o box-shadow ainda
      desenha um pontinho no canto; só aparece quando o JS liga a opacidade,
      ao primeiro scroll (setProgress com p > 0) */
@@ -706,7 +771,7 @@ img { display: block; max-width: 100%; }
   top: -1px;
   width: 2px;
   height: 0%;
-  background: linear-gradient(180deg, rgba(143, 195, 240, 0), #ffffff);
+  background: linear-gradient(180deg, rgba(var(--accent-rgb), 0), var(--hot));
 }
 .logo-edge-left { left: -1px; }
 .logo-edge-right { right: -1px; }
@@ -715,10 +780,10 @@ img { display: block; max-width: 100%; }
   bottom: -1px;
   height: 2px;
   width: 0%;
-  background: linear-gradient(90deg, rgba(143, 195, 240, 0), #ffffff);
+  background: linear-gradient(90deg, rgba(var(--accent-rgb), 0), var(--hot));
 }
 .logo-edge-bottom-left { left: -1px; }
-.logo-edge-bottom-right { right: -1px; background: linear-gradient(90deg, #ffffff, rgba(143, 195, 240, 0)); }
+.logo-edge-bottom-right { right: -1px; background: linear-gradient(90deg, var(--hot), rgba(var(--accent-rgb), 0)); }
 
 /*
  * Bordas do primeiro card de texto — a energia chega no meio do topo (onde
@@ -729,7 +794,7 @@ img { display: block; max-width: 100%; }
 .text-edge {
   position: absolute;
   pointer-events: none;
-  box-shadow: 0 0 8px rgba(143, 195, 240, 0.75);
+  box-shadow: 0 0 8px rgba(var(--accent-rgb), 0.75);
   opacity: 0;
 }
 .text-edge-top-right {
@@ -737,42 +802,42 @@ img { display: block; max-width: 100%; }
   left: 50%;
   width: 0%;
   height: 2px;
-  background: linear-gradient(90deg, rgba(143, 195, 240, 0), #ffffff);
+  background: linear-gradient(90deg, rgba(var(--accent-rgb), 0), var(--hot));
 }
 .text-edge-right-top {
   top: -1px;
   right: -1px;
   width: 2px;
   height: 0%;
-  background: linear-gradient(180deg, rgba(143, 195, 240, 0), #ffffff);
+  background: linear-gradient(180deg, rgba(var(--accent-rgb), 0), var(--hot));
 }
 .text-edge-top-left {
   top: -1px;
   right: 50%;
   width: 0%;
   height: 2px;
-  background: linear-gradient(90deg, #ffffff, rgba(143, 195, 240, 0));
+  background: linear-gradient(90deg, var(--hot), rgba(var(--accent-rgb), 0));
 }
 .text-edge-left {
   top: -1px;
   left: -1px;
   width: 2px;
   height: 0%;
-  background: linear-gradient(180deg, rgba(143, 195, 240, 0), #ffffff);
+  background: linear-gradient(180deg, rgba(var(--accent-rgb), 0), var(--hot));
 }
 .text-edge-bottom {
   bottom: -1px;
   left: -1px;
   width: 0%;
   height: 2px;
-  background: linear-gradient(90deg, rgba(143, 195, 240, 0), #ffffff);
+  background: linear-gradient(90deg, rgba(var(--accent-rgb), 0), var(--hot));
 }
 .text-edge-right-bottom {
   bottom: -1px;
   right: -1px;
   width: 2px;
   height: 0%;
-  background: linear-gradient(180deg, #ffffff, rgba(143, 195, 240, 0));
+  background: linear-gradient(180deg, var(--hot), rgba(var(--accent-rgb), 0));
 }
 
 /*
@@ -786,42 +851,42 @@ img { display: block; max-width: 100%; }
   left: -1px;
   width: 2px;
   height: 0%;
-  background: linear-gradient(180deg, rgba(143, 195, 240, 0), #ffffff);
+  background: linear-gradient(180deg, rgba(var(--accent-rgb), 0), var(--hot));
 }
 .text-edge-side-bottom-left {
   bottom: -1px;
   left: -1px;
   width: 0%;
   height: 2px;
-  background: linear-gradient(90deg, rgba(143, 195, 240, 0), #ffffff);
+  background: linear-gradient(90deg, rgba(var(--accent-rgb), 0), var(--hot));
 }
 .text-edge-side-left-top {
   bottom: 50%;
   left: -1px;
   width: 2px;
   height: 0%;
-  background: linear-gradient(0deg, rgba(143, 195, 240, 0), #ffffff);
+  background: linear-gradient(0deg, rgba(var(--accent-rgb), 0), var(--hot));
 }
 .text-edge-side-top {
   top: -1px;
   left: -1px;
   width: 0%;
   height: 2px;
-  background: linear-gradient(90deg, rgba(143, 195, 240, 0), #ffffff);
+  background: linear-gradient(90deg, rgba(var(--accent-rgb), 0), var(--hot));
 }
 .text-edge-side-right {
   top: -1px;
   right: -1px;
   width: 2px;
   height: 0%;
-  background: linear-gradient(180deg, rgba(143, 195, 240, 0), #ffffff);
+  background: linear-gradient(180deg, rgba(var(--accent-rgb), 0), var(--hot));
 }
 .text-edge-side-bottom-right {
   bottom: -1px;
   right: -1px;
   width: 0%;
   height: 2px;
-  background: linear-gradient(90deg, #ffffff, rgba(143, 195, 240, 0));
+  background: linear-gradient(90deg, var(--hot), rgba(var(--accent-rgb), 0));
 }
 
 .pres-card-runner {
@@ -831,8 +896,8 @@ img { display: block; max-width: 100%; }
   width: 8px;
   height: 8px;
   border-radius: 50%;
-  background: radial-gradient(circle, #ffffff 0%, #bfe3ff 45%, rgba(143, 195, 240, 0) 75%);
-  box-shadow: 0 0 14px 5px rgba(143, 195, 240, 0.85);
+  background: radial-gradient(circle, var(--hot) 0%, var(--hot-mid) 45%, rgba(var(--accent-rgb), 0) 75%);
+  box-shadow: 0 0 14px 5px rgba(var(--accent-rgb), 0.85);
   pointer-events: none;
   opacity: 0;
   will-change: transform, opacity;
@@ -841,20 +906,20 @@ img { display: block; max-width: 100%; }
 .presentation-text {
   font-size: 1.05rem;
   line-height: 1.8;
-  color: var(--white);
+  color: var(--text);
 }
 
 .presentation-text--cta {
   font-family: var(--mono);
   font-size: 1rem;
   letter-spacing: 0.03em;
-  color: var(--blue-light);
+  color: var(--accent);
 }
 
 .section-label {
   font-family: var(--mono);
   font-size: 0.8rem;
-  color: var(--blue-light);
+  color: var(--accent);
   letter-spacing: 0.1em;
   text-transform: uppercase;
   margin-bottom: 0.9rem;
@@ -879,13 +944,13 @@ img { display: block; max-width: 100%; }
   width: 6px;
   height: 6px;
   margin-top: 0.5rem;
-  background: var(--blue-light);
-  box-shadow: 0 0 8px rgba(143, 195, 240, 0.7);
+  background: var(--accent);
+  box-shadow: 0 0 8px rgba(var(--accent-rgb), 0.7);
 }
 .pres-bullet-title {
   font-weight: 600;
   font-size: 1.05rem;
-  color: var(--white);
+  color: var(--text);
 }
 .pres-bullet-desc {
   font-family: var(--mono);
@@ -901,7 +966,7 @@ img { display: block; max-width: 100%; }
   gap: 1.6rem;
   margin-top: 1.8rem;
   padding-top: 1.6rem;
-  border-top: 1px solid rgba(122, 179, 232, 0.14);
+  border-top: 1px solid rgba(var(--accent-soft-rgb), 0.14);
 }
 .pres-tile {
   flex: 1;
@@ -909,7 +974,7 @@ img { display: block; max-width: 100%; }
 .pres-tile-title {
   font-size: 0.95rem;
   font-weight: 600;
-  color: var(--blue-light);
+  color: var(--accent);
 }
 .pres-tile-desc {
   font-family: var(--mono);
@@ -933,9 +998,9 @@ img { display: block; max-width: 100%; }
   font-size: 0.76rem;
   text-transform: uppercase;
   letter-spacing: 0.08em;
-  color: var(--blue-light);
+  color: var(--accent);
   padding: 0.35rem 0.85rem;
-  border: 1px solid rgba(122, 179, 232, 0.25);
+  border: 1px solid rgba(var(--accent-soft-rgb), 0.25);
 }
 
 /*
@@ -952,8 +1017,8 @@ img { display: block; max-width: 100%; }
   height: 2px;
   width: 0;
   transform-origin: 0 50%;
-  background: linear-gradient(90deg, rgba(143, 195, 240, 0), rgba(143, 195, 240, 0.8) 65%, #ffffff 100%);
-  box-shadow: 0 0 8px rgba(143, 195, 240, 0.5);
+  background: linear-gradient(90deg, rgba(var(--accent-rgb), 0), rgba(var(--accent-rgb), 0.8) 65%, var(--hot) 100%);
+  box-shadow: 0 0 8px rgba(var(--accent-rgb), 0.5);
   pointer-events: none;
   z-index: 6;
   opacity: 0;
@@ -967,8 +1032,8 @@ img { display: block; max-width: 100%; }
   width: 10px;
   height: 10px;
   border-radius: 50%;
-  background: radial-gradient(circle, #ffffff 0%, #bfe3ff 45%, rgba(143, 195, 240, 0) 75%);
-  box-shadow: 0 0 18px 6px rgba(143, 195, 240, 0.85);
+  background: radial-gradient(circle, var(--hot) 0%, var(--hot-mid) 45%, rgba(var(--accent-rgb), 0) 75%);
+  box-shadow: 0 0 18px 6px rgba(var(--accent-rgb), 0.85);
   pointer-events: none;
   z-index: 6;
   opacity: 0;
@@ -982,7 +1047,7 @@ img { display: block; max-width: 100%; }
   width: 280px;
   height: 280px;
   border-radius: 50%;
-  background: radial-gradient(circle, rgba(191, 227, 255, 0.85) 0%, rgba(143, 195, 240, 0.3) 45%, rgba(143, 195, 240, 0) 75%);
+  background: radial-gradient(circle, rgba(var(--hot-mid-rgb), 0.85) 0%, rgba(var(--accent-rgb), 0.3) 45%, rgba(var(--accent-rgb), 0) 75%);
   pointer-events: none;
   z-index: 6;
   opacity: 0;
@@ -1009,7 +1074,7 @@ img { display: block; max-width: 100%; }
   stroke: url(#beam4TailGradient);
   stroke-width: 2;
   stroke-linecap: round;
-  filter: drop-shadow(0 0 6px rgba(143, 195, 240, 0.6));
+  filter: drop-shadow(0 0 6px rgba(var(--accent-rgb), 0.6));
   opacity: 0;
   will-change: opacity;
 }
@@ -1081,7 +1146,7 @@ img { display: block; max-width: 100%; }
 .tela-panel--center {
   width: min(520px, 88vw);
   text-align: center;
-  text-shadow: 0 1px 12px rgba(5, 8, 16, 0.9);
+  text-shadow: 0 1px 12px rgba(var(--bg-rgb), 0.9);
 }
 
 /* véu escuro só atrás do texto. Baixar o brilho do vídeo inteiro ajuda, mas
@@ -1098,9 +1163,9 @@ img { display: block; max-width: 100%; }
   pointer-events: none;
   background: radial-gradient(
     ellipse at center,
-    rgba(5, 8, 16, 0.88) 0%,
-    rgba(5, 8, 16, 0.72) 50%,
-    rgba(5, 8, 16, 0) 100%
+    rgba(var(--bg-rgb), 0.88) 0%,
+    rgba(var(--bg-rgb), 0.72) 50%,
+    rgba(var(--bg-rgb), 0) 100%
   );
 }
 
@@ -1119,7 +1184,7 @@ img { display: block; max-width: 100%; }
   gap: 0.75rem;
   margin-top: 1.1rem;
   padding-top: 1rem;
-  border-top-color: rgba(122, 179, 232, 0.22);
+  border-top-color: rgba(var(--accent-soft-rgb), 0.22);
 }
 
 .tela-panel--center .tela-panel-eyebrow {
@@ -1142,7 +1207,7 @@ img { display: block; max-width: 100%; }
   margin-top: 1.2rem;
   padding: 0.65rem 1.3rem;
   font-size: 0.82rem;
-  background: rgba(5, 8, 16, 0.55);
+  background: rgba(var(--bg-rgb), 0.55);
 }
 
 .tela-panel-eyebrow {
@@ -1150,14 +1215,14 @@ img { display: block; max-width: 100%; }
   font-size: 0.78rem;
   letter-spacing: 0.14em;
   text-transform: uppercase;
-  color: var(--blue-light);
+  color: var(--accent);
 }
 
 .tela-panel-heading {
   font-size: 1.6rem;
   line-height: 1.3;
   font-weight: 700;
-  color: var(--white);
+  color: var(--text);
   margin: 0.6rem 0 0;
 }
 
@@ -1167,7 +1232,7 @@ img { display: block; max-width: 100%; }
   gap: 0.9rem;
   margin-top: 1.4rem;
   padding-top: 1.2rem;
-  border-top: 1px solid rgba(122, 179, 232, 0.14);
+  border-top: 1px solid rgba(var(--accent-soft-rgb), 0.14);
 }
 
 .tela-panel-topic {
@@ -1178,7 +1243,7 @@ img { display: block; max-width: 100%; }
 .tela-panel-topic-title {
   font-size: 1.08rem;
   font-weight: 600;
-  color: var(--blue-light);
+  color: var(--accent);
 }
 
 .tela-panel-topic-desc {
@@ -1194,18 +1259,18 @@ img { display: block; max-width: 100%; }
   align-items: center;
   margin-top: 1.4rem;
   padding: 0.55rem 1.1rem;
-  border: 1px solid rgba(122, 179, 232, 0.35);
+  border: 1px solid rgba(var(--accent-soft-rgb), 0.35);
   border-radius: 999px;
   font-family: var(--mono);
   font-size: 0.72rem;
   letter-spacing: 0.06em;
-  color: var(--blue-light);
+  color: var(--accent);
   transition: background-color 0.15s ease, border-color 0.15s ease;
 }
 
 .tela-panel-cta:hover {
-  background: rgba(122, 179, 232, 0.12);
-  border-color: rgba(122, 179, 232, 0.55);
+  background: rgba(var(--accent-soft-rgb), 0.12);
+  border-color: rgba(var(--accent-soft-rgb), 0.55);
 }
 
 /*
@@ -1315,23 +1380,55 @@ img { display: block; max-width: 100%; }
     inset: -1.5rem -1.6rem;
   }
 
-  /* trilha mais discreta: sem espaço pra rótulo no hover (que em toque nem
-     existe), fica só a sequência de nós */
+  /* trilha na horizontal, no alto da tela: logo abaixo do seletor de idioma
+     e acima dos textos e das telas. Na vertical ela disputava a largura (já
+     curta) com o conteúdo; deitada, ocupa uma faixa que não é de ninguém.
+     Sem rótulo no hover (em toque nem existe): só a sequência de nós. */
+  /* `top` fica no meio da faixa vazia entre o seletor de idioma (acaba em
+     ~56px) e o conteúdo (telas e textos começam por volta de 210px); a conta
+     está espelhada em margemTopo, em Experience3D.tsx */
   .scene-nav {
-    right: 0.5rem;
+    top: clamp(4.6rem, 12.5vh, 7rem);
+    left: 0;
+    right: 0;
+    transform: none;
+    flex-direction: row;
+    justify-content: center;
+    gap: 0;
   }
 
   .scene-nav-rail {
-    gap: 0.1rem;
+    flex-direction: row;
+    gap: 0;
+    padding: 0 0.35rem;
   }
 
-  /* 28px: abaixo do 32 do desktop pra caber numa tela de celular, mas ainda
-     acima do mínimo de 24px pra alvo de toque */
+  /* a linha deita: o eixo do progresso passa a ser X */
+  .scene-nav-line {
+    top: 50%;
+    bottom: auto;
+    left: 0;
+    right: 0;
+    width: auto;
+    height: 1px;
+    margin: -0.5px 0 0;
+  }
+  .scene-nav-line--on {
+    background: linear-gradient(90deg, rgba(var(--accent-rgb), 0.85), rgba(var(--accent-deep-rgb), 0.5));
+    transform-origin: left center;
+    transform: scaleX(var(--progresso, 0));
+  }
+
+  /* as setas das pontas viram "anterior" e "próximo" na horizontal */
+  .scene-nav-step svg {
+    transform: rotate(-90deg);
+  }
+
+  /* 28px: abaixo do 32 do desktop pra caber 8 nós + 2 setas numa tela de
+     celular, mas ainda acima do mínimo de 24px pra alvo de toque */
   .scene-nav-dot,
   .scene-nav-step {
     width: 28px;
-  }
-  .scene-nav-dot {
     height: 28px;
   }
 
@@ -1396,4 +1493,56 @@ html.entrou .scene-nav {
   html.entrou .scene-nav {
     animation: none;
   }
+}
+
+/*
+ * Marca (Logo.tsx) — as cores vêm do tema, então a mesma logo serve nos dois.
+ */
+.logo-anel { stroke: var(--accent); }
+.logo-w { stroke: var(--text); }
+.logo-ponto { fill: var(--text); stroke: none; }
+.logo-linha { stroke: rgba(var(--accent-deep-rgb), 1); }
+
+/*
+ * Troca de tema — ver lib/ondaDeDados.ts.
+ *
+ * O retrato "novo" da página é recortado pela máscara que o script atualiza
+ * a cada frame (um pixel por célula, opaco = onda já passou). O retrato
+ * "antigo" fica parado por baixo. As animações padrão do navegador (fade)
+ * são desligadas; a de `onda-segura` não muda nada: existe só pra manter a
+ * transição viva até a onda terminar (ela dura enquanto houver animação).
+ */
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation: none;
+  mix-blend-mode: normal;
+}
+::view-transition-new(root) {
+  animation: onda-segura var(--onda-dur, 1600ms) linear both;
+  -webkit-mask-image: var(--onda-mask);
+  mask-image: var(--onda-mask);
+  -webkit-mask-size: 100% 100%;
+  mask-size: 100% 100%;
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
+  image-rendering: pixelated;
+}
+::view-transition-group(onda-dados),
+::view-transition-old(onda-dados),
+::view-transition-new(onda-dados) {
+  animation: none;
+  mix-blend-mode: normal;
+}
+@keyframes onda-segura {
+  from { opacity: 1; }
+  to { opacity: 1; }
+}
+
+/* sem View Transitions (ou com movimento reduzido): troca simples, só de cor */
+html.tema-suave,
+html.tema-suave *,
+html.tema-suave *::before,
+html.tema-suave *::after {
+  transition: background-color 0.35s ease, color 0.35s ease, border-color 0.35s ease,
+    fill 0.35s ease, stroke 0.35s ease !important;
 }

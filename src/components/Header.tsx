@@ -1,5 +1,6 @@
 import { useLanguage } from '../hooks/useLanguage';
 import ScrambleText from './ScrambleText';
+import ThemeToggle from './ThemeToggle';
 import type { Language } from '../i18n/translations';
 
 // os rótulos materializam junto com o hero, em cascata da esquerda pra
@@ -15,6 +16,7 @@ export default function Header() {
 
   return (
     <header className="site-header">
+      <ThemeToggle />
       <div className="lang-switch" role="group" aria-label="Idioma">
         {OPTIONS.map(({ code, label, delay }) => (
           <button

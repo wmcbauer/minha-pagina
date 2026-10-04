@@ -38,7 +38,9 @@ const SceneNav = forwardRef<SceneNavHandle, {
   useImperativeHandle(ref, () => ({
     setProgress(indiceAtivo, percorrido) {
       if (trilhaRef.current) {
-        trilhaRef.current.style.transform = `scaleY(${Math.max(0, Math.min(1, percorrido))})`;
+        // variável CSS (e não um transform direto): a trilha é vertical no
+        // desktop e horizontal no celular, e quem sabe o eixo é o CSS
+        trilhaRef.current.style.setProperty('--progresso', String(Math.max(0, Math.min(1, percorrido))));
       }
       if (ativoRef.current === indiceAtivo) return;
       ativoRef.current = indiceAtivo;

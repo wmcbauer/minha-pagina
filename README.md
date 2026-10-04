@@ -25,17 +25,20 @@ src/
     beams.ts          feixes de energia 2D e projeção 3D → tela
     captures.tsx      componentes que tiram scroll/offset/câmera de dentro do Canvas
     nodesConfig.ts    as cenas: posição, câmera, vídeo, lado do texto
+    sceneTheme.ts     cores da cena 3D em cada tema (escuro/claro)
     ChipScene.tsx     o chip, as telas e as trilhas 3D
   i18n/translations.ts  todos os textos (pt, en, es)
   hooks/              idioma e layout compacto
   config/contact.ts   número do WhatsApp (único lugar pra trocar)
-  lib/                analytics (Clarity, opcional) e funções numéricas
+  lib/                tema (theme.ts), onda de dados da troca de tema (ondaDeDados.ts),
+                      analytics (Clarity, opcional) e funções numéricas
 ```
 
 ## Como mexer
 
 - **Textos:** `src/i18n/translations.ts` (os três idiomas têm que ter as mesmas chaves).
 - **Adicionar ou reordenar cenas:** `src/three/nodesConfig.ts`. Os nós sem `position` são só espaço de scroll; a abertura precisa de 3 deles (ver `PRES_TOTAL` em `timeline.ts`).
+- **Cores e tema:** as variáveis ficam no topo de `src/index.css` (`:root` = escuro, `:root[data-theme='light']` = claro). A cena 3D não lê CSS: as mesmas cores estão em `src/three/sceneTheme.ts` — mudou uma, mude a outra. O efeito da troca (onda de células com caracteres) é configurável em `src/lib/ondaDeDados.ts` (`OPCOES_PADRAO`: tamanho da célula, duração, variação e conjunto de caracteres).
 - **Número do WhatsApp:** `src/config/contact.ts`.
 - **Analytics:** copie `.env.example` para `.env` e preencha `VITE_CLARITY_ID`.
 
