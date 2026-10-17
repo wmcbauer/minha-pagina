@@ -28,12 +28,12 @@ import type { EnergyCardHandle } from '../components/EnergyCard';
 // largura do painel (igual à do CSS) e folga do centro do nó até o painel —
 // a folga tem que ser maior que a METADE da tela projetada (SCREEN_W em
 // ChipScene.tsx), senão o texto monta em cima do retângulo
-const PANEL_WIDTH = 400;
+const PANEL_WIDTH = 460;
 // o painel DENTRO da tela é mais largo que os laterais: aquela tela chega
 // grande, e uma coluna estreita no meio dela deixava o texto quebrando
 // demais. Tem que bater com a `width` de .tela-panel--center no CSS.
-const PANEL_WIDTH_CENTER = 520;
-/** largura real do painel centralizado — espelha `min(520px, 88vw)` do CSS,
+const PANEL_WIDTH_CENTER = 600;
+/** largura real do painel centralizado — espelha `min(600px, 88vw)` do CSS,
  * porque a centralização depende de os dois concordarem */
 const larguraCentro = () => Math.min(PANEL_WIDTH_CENTER, window.innerWidth * 0.88);
 const PANEL_GAP = 400;
@@ -590,7 +590,7 @@ export default function Experience3D({ onPronto }: { onPronto?: () => void }) {
       {/* hero e apresentação — elementos HTML comuns, fora do Canvas: tela
           cheia de verdade, sem bloquear o scroll do que está por baixo */}
       <div ref={heroRef} className="hero-overlay-wrap">
-        <Hero logoCardRef={logoCardRef} />
+        <Hero logoCardRef={logoCardRef} onVerMais={() => jumpTo(NAV_OFFSETS[1])} />
       </div>
       <div ref={presRef} className="presentation" style={{ opacity: 0, visibility: 'hidden' }}>
         <Presentation

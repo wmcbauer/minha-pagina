@@ -4,11 +4,16 @@ import { Logo } from './Logo';
 import ScrambleText from './ScrambleText';
 import type { EnergyCardHandle } from './EnergyCard';
 import { useLanguage } from '../hooks/useLanguage';
+import { whatsappUrl } from '../config/contact';
+import { registrarEvento } from '../lib/analytics';
 
 export default function Hero({
   logoCardRef,
+  onVerMais,
 }: {
   logoCardRef?: RefObject<EnergyCardHandle>;
+  /** botão secundário: leva pro primeiro bloco de soluções */
+  onVerMais?: () => void;
 }) {
   const { t } = useLanguage();
 
@@ -31,7 +36,32 @@ export default function Hero({
           </span>
           <ScrambleText as="h1" className="hero-sub" text={t.hero.subtitle} delay={620} duration={680} />
         </LogoEnergyFrame>
-        <ScrambleText as="div" className="hero-badge" text={t.hero.badge} delay={960} duration={520} />
+        {/* a ação vem logo abaixo da promessa: quem já chegou decidido não
+            precisa atravessar a página inteira pra pedir orçamento */}
+        <div className="hero-acoes">
+          <a
+            className="hero-cta"
+            href={whatsappUrl(t.whatsapp.mensagem)}
+            target="_blank"
+            rel="noreferrer"
+            onClick={() => registrarEvento('whatsapp_hero')}
+          >
+            <ScrambleText text={t.hero.cta} delay={900} duration={480} />
+          </a>
+          <button type="button" className="hero-cta hero-cta--sec" onClick={onVerMais}>
+            <ScrambleText text={t.hero.ctaSecundario} delay={980} duration={480} />
+          </button>
+        </div>
+        <ul className="hero-provas">
+          {t.hero.provas.map((prova, i) => (
+            <li key={i}>
+              <svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+                <path d="M3 8.5L6.5 12L13 4.5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+              <ScrambleText text={prova} delay={1060 + i * 80} duration={480} />
+            </li>
+          ))}
+        </ul>
       </div>
       <div className="hero-scroll-cue" aria-hidden="true">
         <span className="hero-scroll-line" />

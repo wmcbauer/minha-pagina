@@ -39,7 +39,12 @@ export interface Translation {
   hero: {
     eyebrow: string;
     subtitle: string;
-    badge: string;
+    /** botão principal (abre o WhatsApp) e o secundário (pula pras soluções) */
+    cta: string;
+    ctaSecundario: string;
+    /** provas curtas logo abaixo dos botões — o que tira a dúvida de quem
+     * ainda não conhece a empresa */
+    provas: string[];
   };
   card1: {
     intro: string;
@@ -90,7 +95,9 @@ export const translations: Record<Language, Translation> = {
     hero: {
       eyebrow: 'Sites · Organização · Atendimento automático',
       subtitle: 'Mais clientes e menos trabalho pra você.',
-      badge: 'Projetos entregues em todo o Brasil',
+      cta: 'Pedir orçamento grátis',
+      ctaSecundario: 'Ver o que fazemos',
+      provas: ['Prazo e valor por escrito', 'No ar em semanas', 'Projetos em todo o Brasil'],
     },
     card1: {
       intro: 'A WMC Tech resolve os problemas digitais do seu negócio, sem você precisar entender de tecnologia:',
@@ -124,6 +131,7 @@ export const translations: Record<Language, Translation> = {
           { title: 'No ar em semanas, não em meses', desc: 'Prazo curto e combinado desde o começo, sem projeto que se arrasta.' },
           { title: 'Tudo explicado sem jargão', desc: 'Você entende cada etapa e sabe exatamente o que está contratando.' },
         ],
+        cta: 'Falar com quem desenvolve',
       },
       servicos: {
         eyebrow: 'O que fazemos',
@@ -134,6 +142,7 @@ export const translations: Record<Language, Translation> = {
           { title: 'Atendimento que não dorme', desc: 'Responde e agenda no WhatsApp 24h, mesmo fora do horário.' },
           { title: 'Tudo conectado', desc: 'Seus sistemas conversando entre si, sem ninguém digitando duas vezes.' },
         ],
+        cta: 'Quero um orçamento',
       },
       processo: {
         eyebrow: 'Como funciona',
@@ -144,6 +153,7 @@ export const translations: Record<Language, Translation> = {
           { title: '03 — Você aprova antes', desc: 'Vê como vai ficar e pede ajuste à vontade, antes de virar site.' },
           { title: '04 — No ar e acompanhado', desc: 'Publicamos, ensinamos você a usar e seguimos por perto depois.' },
         ],
+        cta: 'Começar pela conversa',
       },
       projetos: {
         eyebrow: 'Projetos',
@@ -187,7 +197,9 @@ export const translations: Record<Language, Translation> = {
     hero: {
       eyebrow: 'Websites · Organization · Automatic customer service',
       subtitle: 'More customers, less work for you.',
-      badge: 'Projects delivered all across Brazil',
+      cta: 'Get a free quote',
+      ctaSecundario: 'See what we do',
+      provas: ['Deadline and price in writing', 'Live in weeks', 'Projects all across Brazil'],
     },
     card1: {
       intro: 'WMC Tech solves your business’s digital problems, without you having to understand technology:',
@@ -221,6 +233,7 @@ export const translations: Record<Language, Translation> = {
           { title: 'Live in weeks, not months', desc: 'A short deadline agreed upfront — no project that drags on forever.' },
           { title: 'Explained without jargon', desc: 'You understand every step and know exactly what you are paying for.' },
         ],
+        cta: 'Talk to the developer',
       },
       servicos: {
         eyebrow: 'What we do',
@@ -231,6 +244,7 @@ export const translations: Record<Language, Translation> = {
           { title: 'Support that never sleeps', desc: 'Answers and books on WhatsApp 24/7, even outside business hours.' },
           { title: 'Everything connected', desc: 'Your systems talking to each other, with nobody typing the same thing twice.' },
         ],
+        cta: 'I want a quote',
       },
       processo: {
         eyebrow: 'How it works',
@@ -241,6 +255,7 @@ export const translations: Record<Language, Translation> = {
           { title: '03 — You approve first', desc: 'You see how it will look and ask for changes freely, before it becomes a site.' },
           { title: '04 — Live and supported', desc: 'We publish it, teach you to use it, and stay close afterwards.' },
         ],
+        cta: 'Start with a chat',
       },
       projetos: {
         eyebrow: 'Projects',
@@ -284,7 +299,9 @@ export const translations: Record<Language, Translation> = {
     hero: {
       eyebrow: 'Sitios web · Organización · Atención automática',
       subtitle: 'Más clientes y menos trabajo para ti.',
-      badge: 'Proyectos entregados en todo Brasil',
+      cta: 'Pedir presupuesto gratis',
+      ctaSecundario: 'Ver lo que hacemos',
+      provas: ['Plazo y precio por escrito', 'En línea en semanas', 'Proyectos en todo Brasil'],
     },
     card1: {
       intro: 'WMC Tech resuelve los problemas digitales de tu negocio, sin que tengas que entender de tecnología:',
@@ -318,6 +335,7 @@ export const translations: Record<Language, Translation> = {
           { title: 'En línea en semanas, no en meses', desc: 'Plazo corto y acordado desde el principio, sin proyectos que se alargan.' },
           { title: 'Todo explicado sin tecnicismos', desc: 'Entiendes cada etapa y sabes exactamente lo que estás contratando.' },
         ],
+        cta: 'Hablar con quien desarrolla',
       },
       servicos: {
         eyebrow: 'Qué hacemos',
@@ -328,6 +346,7 @@ export const translations: Record<Language, Translation> = {
           { title: 'Atención que no duerme', desc: 'Responde y agenda por WhatsApp 24h, incluso fuera del horario.' },
           { title: 'Todo conectado', desc: 'Tus sistemas hablando entre sí, sin que nadie escriba lo mismo dos veces.' },
         ],
+        cta: 'Quiero un presupuesto',
       },
       processo: {
         eyebrow: 'Cómo funciona',
@@ -338,6 +357,7 @@ export const translations: Record<Language, Translation> = {
           { title: '03 — Apruebas antes', desc: 'Ves cómo va a quedar y pides ajustes a gusto, antes de que sea un sitio.' },
           { title: '04 — En línea y acompañado', desc: 'Lo publicamos, te enseñamos a usarlo y seguimos cerca después.' },
         ],
+        cta: 'Empezar con una charla',
       },
       projetos: {
         eyebrow: 'Proyectos',
