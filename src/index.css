@@ -417,9 +417,18 @@ img { display: block; max-width: 100%; }
 .hero-overlay {
   position: absolute;
   inset: 0;
-  /* mesma cor de fundo escura e neutra da parte das telas — sem o véu azulado
-     que deixava o hero visivelmente mais claro que o resto da cena */
-  background: var(--bg);
+  /* transparente: o fundo do hero é o FundoVivo (circuito animado), que mora
+     na camada da apresentação logo abaixo e fica parado enquanto o hero
+     desliza pra cima */
+  background: transparent;
+}
+
+.fundo-vivo {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
 }
 
 .hero-inner {
@@ -742,6 +751,13 @@ img { display: block; max-width: 100%; }
   background: var(--bg);
 }
 
+/* o contêiner de fora (Experience3D) e a raiz do componente Presentation
+   usam a mesma classe; o de dentro fica transparente pra deixar ver o
+   FundoVivo, que mora entre os dois */
+.presentation .presentation {
+  background: transparent;
+}
+
 .presentation-world {
   position: absolute;
   inset: 0;
@@ -794,9 +810,12 @@ img { display: block; max-width: 100%; }
   max-width: 1100px;
   padding: 3rem 3.4rem;
   border: 1px solid rgba(var(--accent-soft-rgb), 0.16);
-  /* um pouco mais de opacidade — suaviza a transição de tom entre o
-     interior do retângulo e o fundo escuro ao redor */
-  background: rgba(var(--accent-soft-rgb), 0.07);
+  /* o mesmo leve tom azulado de antes, agora sobre uma base quase opaca da
+     cor de fundo: os pulsos do FundoVivo passam POR TRÁS do cartão sem
+     atravessar as letras */
+  background:
+    linear-gradient(rgba(var(--accent-soft-rgb), 0.07), rgba(var(--accent-soft-rgb), 0.07)),
+    rgba(var(--bg-rgb), 0.9);
 }
 
 /* a logo usa o mesmo retângulo de energia dos textos — mesmo "plano" visual —

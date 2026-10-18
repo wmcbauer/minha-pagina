@@ -19,6 +19,7 @@ import { getTheme, registrarRenderizadorDaCena, useTheme } from '../lib/theme';
 import { CENA, useMudancaDeTema } from './sceneTheme';
 import Hero from '../components/Hero';
 import Presentation from '../components/Presentation';
+import FundoVivo from '../components/FundoVivo';
 import TelaPanel, { type TelaPanelHandle } from '../components/TelaPanel';
 import SceneNav, { type SceneNavHandle, type SceneNavStop } from '../components/SceneNav';
 import { useLanguage } from '../hooks/useLanguage';
@@ -593,6 +594,10 @@ export default function Experience3D({ onPronto }: { onPronto?: () => void }) {
         <Hero logoCardRef={logoCardRef} onVerMais={() => jumpTo(NAV_OFFSETS[1])} />
       </div>
       <div ref={presRef} className="presentation" style={{ opacity: 0, visibility: 'hidden' }}>
+        {/* fundo animado (circuito com pulsos) atrás da abertura e dos
+            textos: vive aqui dentro pra esmaecer junto com a apresentação
+            quando a câmera parte pras telas 3D */}
+        <FundoVivo />
         <Presentation
           worldRef={presWorldRef}
           refs={{
