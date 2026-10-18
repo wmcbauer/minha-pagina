@@ -1,6 +1,6 @@
-import { Suspense, useMemo, useRef, useState } from 'react';
+import { Suspense, useEffect, useMemo, useRef, useState } from 'react';
 import { useFrame } from '@react-three/fiber';
-import { useScroll, Points, PointMaterial, useVideoTexture } from '@react-three/drei';
+import { useScroll, Points, PointMaterial } from '@react-three/drei';
 import * as THREE from 'three';
 import { SCENE_NODES, type PanelSide } from './nodesConfig';
 import { useCompactLayout } from '../hooks/useCompactLayout';
@@ -263,12 +263,47 @@ function ScreenNode({ index }: { index: number }) {
 const VIDEO_ANTECEDENCIA_SEGMENTOS = 2;
 
 /**
+ * Textura de vídeo própria, no lugar do `useVideoTexture` do drei: o do drei
+ * suporta streaming HLS e por isso arrastava a biblioteca hls.js inteira pro
+ * pacote (~1,4 MB de código, mais pesado que o próprio three.js) — e aqui só
+ * tocamos .mp4 comum. Até o vídeo ter o primeiro quadro a textura fica
+ * preta, que é justamente o "painel desligado" da revelação.
+ */
+function useTexturaDeVideo(src: string) {
+  const textura = useMemo(() => {
+    const video = document.createElement('video');
+    video.src = src;
+    video.crossOrigin = 'anonymous';
+    video.loop = true;
+    video.muted = true;
+    // atributo além da propriedade: o Safari do iPhone só deixa tocar sem
+    // toque do usuário se o `muted` estiver no HTML
+    video.setAttribute('muted', '');
+    video.playsInline = true;
+    video.preload = 'auto';
+    const tex = new THREE.VideoTexture(video);
+    tex.colorSpace = THREE.SRGBColorSpace;
+    return tex;
+  }, [src]);
+
+  useEffect(() => () => {
+    const video = textura.image as HTMLVideoElement;
+    video.pause();
+    video.removeAttribute('src');
+    video.load();
+    textura.dispose();
+  }, [textura]);
+
+  return textura;
+}
+
+/**
  * Só monta (e portanto só baixa) o vídeo quando o scroll chega perto da tela
  * dele. Uma vez montado, fica — desmontar e remontar rebaixaria o arquivo.
  *
- * O <Suspense> é PRÓPRIO de cada vídeo de propósito: `useVideoTexture`
- * suspende enquanto carrega, e sem uma fronteira aqui a suspensão subiria
- * até a do Canvas e esconderia a cena inteira até o arquivo terminar.
+ * O <Suspense> próprio fica como proteção: a textura de vídeo atual não
+ * suspende, mas se algo dentro da tela suspender, a fronteira impede que
+ * isso suba até a do Canvas e esconda a cena inteira.
  */
 function VideoScreenGate({ index }: { index: number }) {
   const scroll = useScroll();
@@ -300,7 +335,7 @@ function VideoScreenGate({ index }: { index: number }) {
 function VideoScreenNode({ index }: { index: number }) {
   const node = SCENE_NODES[index];
   const scroll = useScroll();
-  const texture = useVideoTexture(node.video!, { muted: true, loop: true, start: false, playsInline: true });
+  const texture = useTexturaDeVideo(node.video!);
   const compacto = useCompactLayout();
   const matRef = useRef<THREE.MeshBasicMaterial>(null);
   const edgeMatRef = useRef<THREE.LineBasicMaterial>(null);

@@ -83,9 +83,9 @@ export interface Translation {
 export const translations: Record<Language, Translation> = {
   pt: {
     meta: {
-      title: 'WMC Tech — Sites e atendimento automático para pequenos negócios',
+      title: 'Criação de Sites e Atendimento Automático no WhatsApp | WMC Tech',
       description:
-        'Criamos o site e o atendimento automático da sua empresa, com prazo e valor por escrito e tudo explicado sem jargão. Orçamento sem compromisso.',
+        'Criação de sites profissionais, sistemas sob medida e atendimento automático no WhatsApp para pequenos negócios. Prazo e valor por escrito. Orçamento grátis.',
     },
     whatsapp: {
       label: 'Falar no WhatsApp',
@@ -185,9 +185,9 @@ export const translations: Record<Language, Translation> = {
   },
   en: {
     meta: {
-      title: 'WMC Tech — Websites and automatic customer service for small businesses',
+      title: 'Website Design and Automatic WhatsApp Customer Service | WMC Tech',
       description:
-        'We build your company website and automatic customer service, with the deadline and price in writing and everything explained without jargon. Free quote.',
+        'Professional websites, custom systems and automatic WhatsApp customer service for small businesses. Deadline and price in writing. Free quote.',
     },
     whatsapp: {
       label: 'Chat on WhatsApp',
@@ -287,9 +287,9 @@ export const translations: Record<Language, Translation> = {
   },
   es: {
     meta: {
-      title: 'WMC Tech — Sitios web y atención automática para pequeños negocios',
+      title: 'Creación de Sitios Web y Atención Automática por WhatsApp | WMC Tech',
       description:
-        'Creamos el sitio web y la atención automática de tu empresa, con plazo y precio por escrito y todo explicado sin tecnicismos. Presupuesto sin compromiso.',
+        'Sitios web profesionales, sistemas a medida y atención automática por WhatsApp para pequeños negocios. Plazo y precio por escrito. Presupuesto gratis.',
     },
     whatsapp: {
       label: 'Hablar por WhatsApp',

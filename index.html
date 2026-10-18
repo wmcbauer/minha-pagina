@@ -3,8 +3,14 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>WMC Tech — Sites e atendimento automático para pequenos negócios</title>
-<meta name="description" content="Criamos o site e o atendimento automático da sua empresa, com prazo e valor por escrito e tudo explicado sem jargão. Orçamento sem compromisso.">
+<title>Criação de Sites e Atendimento Automático no WhatsApp | WMC Tech</title>
+<meta name="description" content="Criação de sites profissionais, sistemas sob medida e atendimento automático no WhatsApp para pequenos negócios. Prazo e valor por escrito. Orçamento grátis.">
+<!-- Um endereço só pros três idiomas (a troca é feita na página, sem URL
+     própria), então não há hreflang: o canonical diz ao Google qual é a
+     versão oficial e evita duplicata com/sem www, ?parâmetros etc. -->
+<link rel="canonical" href="https://wmcdevfrontend.tech/">
+<meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1">
+<meta name="author" content="WMC Tech">
 <meta name="theme-color" content="#050810">
 <!-- Tema: define data-theme ANTES da primeira pintura (senão quem escolheu o
      claro veria um clarão escuro a cada visita). Sem escolha salva, o padrão
@@ -27,15 +33,17 @@
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="WMC Tech">
 <meta property="og:locale" content="pt_BR">
+<meta property="og:locale:alternate" content="en_US">
+<meta property="og:locale:alternate" content="es_ES">
 <meta property="og:url" content="https://wmcdevfrontend.tech/">
-<meta property="og:title" content="WMC Tech — Sites e atendimento automático para pequenos negócios">
+<meta property="og:title" content="Criação de Sites e Atendimento Automático no WhatsApp | WMC Tech">
 <meta property="og:description" content="Criamos o site e o atendimento automático da sua empresa. Prazo e valor por escrito, tudo explicado sem jargão. Orçamento sem compromisso.">
 <meta property="og:image" content="https://wmcdevfrontend.tech/og-image.png">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
 <meta property="og:image:alt" content="WMC Tech — sites e atendimento automático para pequenos negócios">
 <meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:title" content="WMC Tech — Sites e atendimento automático para pequenos negócios">
+<meta name="twitter:title" content="Criação de Sites e Atendimento Automático no WhatsApp | WMC Tech">
 <meta name="twitter:description" content="Criamos o site e o atendimento automático da sua empresa. Orçamento sem compromisso.">
 <meta name="twitter:image" content="https://wmcdevfrontend.tech/og-image.png">
 
@@ -45,28 +53,86 @@
 <script type="application/ld+json">
 {
   "@context": "https://schema.org",
-  "@type": "ProfessionalService",
-  "name": "WMC Tech",
-  "url": "https://wmcdevfrontend.tech/",
-  "logo": "https://wmcdevfrontend.tech/assets/logo-icon.png",
-  "image": "https://wmcdevfrontend.tech/og-image.png",
-  "description": "Criamos o site e o atendimento automático da sua empresa, com prazo e valor por escrito e tudo explicado sem jargão.",
-  "telephone": "+55-11-91793-0168",
-  "areaServed": "BR",
-  "availableLanguage": ["pt-BR", "en", "es"]
+  "@graph": [
+    {
+      "@type": "ProfessionalService",
+      "@id": "https://wmcdevfrontend.tech/#empresa",
+      "name": "WMC Tech",
+      "url": "https://wmcdevfrontend.tech/",
+      "logo": "https://wmcdevfrontend.tech/assets/logo-icon.png",
+      "image": "https://wmcdevfrontend.tech/og-image.png",
+      "description": "Criação de sites profissionais, sistemas sob medida e atendimento automático no WhatsApp para pequenos negócios, com prazo e valor por escrito e tudo explicado sem jargão.",
+      "slogan": "Mais clientes e menos trabalho pra você.",
+      "telephone": "+55-11-91793-0168",
+      "areaServed": { "@type": "Country", "name": "Brasil" },
+      "availableLanguage": ["pt-BR", "en", "es"],
+      "contactPoint": {
+        "@type": "ContactPoint",
+        "telephone": "+55-11-91793-0168",
+        "contactType": "sales",
+        "url": "https://wa.me/5511917930168",
+        "availableLanguage": ["Portuguese", "English", "Spanish"]
+      },
+      "knowsAbout": ["Criação de sites", "Sistemas de gestão", "Atendimento automático no WhatsApp", "Integração de sistemas"],
+      "hasOfferCatalog": {
+        "@type": "OfferCatalog",
+        "name": "Serviços",
+        "itemListElement": [
+          { "@type": "Offer", "itemOffered": { "@type": "Service", "name": "Criação de sites", "description": "Site rápido e bonito, achado no Google e feito pra transformar visita em cliente." } },
+          { "@type": "Offer", "itemOffered": { "@type": "Service", "name": "Sistema sob medida", "description": "Pedidos, clientes e caixa organizados num lugar só, sem planilha solta." } },
+          { "@type": "Offer", "itemOffered": { "@type": "Service", "name": "Atendimento automático no WhatsApp", "description": "Responde e agenda clientes no WhatsApp 24h, mesmo fora do horário." } },
+          { "@type": "Offer", "itemOffered": { "@type": "Service", "name": "Integração de sistemas", "description": "Seus programas conversando entre si, sem ninguém digitando a mesma coisa duas vezes." } }
+        ]
+      }
+    },
+    {
+      "@type": "WebSite",
+      "@id": "https://wmcdevfrontend.tech/#site",
+      "url": "https://wmcdevfrontend.tech/",
+      "name": "WMC Tech",
+      "inLanguage": "pt-BR",
+      "publisher": { "@id": "https://wmcdevfrontend.tech/#empresa" }
+    }
+  ]
 }
 </script>
 
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
-<link href="https://fonts.googleapis.com/css2?family=DM+Mono:ital,wght@0,300;0,400;0,500;1,300&family=Syne:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Syne:wght@400;600;700&display=swap" rel="stylesheet"/>
 </head>
 <body>
 <!-- Primeira pintura: aparece na hora, antes de qualquer JavaScript, e é o
      que buscadores e quem está sem JS enxergam. O React troca este bloco pelo
      componente BootScreen (src/components/BootScreen.tsx), que é IDÊNTICO —
      mantenha os dois em sincronia (h1 em português = translations.pt.hero.subtitle). -->
-<div id="root"><div class="boot"><div class="boot-inner"><svg class="boot-mark" viewBox="0 0 100 100" width="84" height="84" fill="none" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path class="logo-anel" d="M74.5 29.4 A32 32 0 1 0 74.5 70.6" stroke-width="7.5"/><path class="logo-w" d="M33 39 L41.5 64 L50 49 L58.5 64 L67 39" stroke-width="7.5"/><circle class="logo-ponto" cx="74.5" cy="29.4" r="7"/></svg><h1 class="sr-only">Mais clientes e menos trabalho pra você.</h1></div></div></div>
+<div id="root"><div class="boot"><div class="boot-inner"><svg class="boot-mark" viewBox="0 0 100 100" width="84" height="84" fill="none" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path class="logo-anel" d="M74.5 29.4 A32 32 0 1 0 74.5 70.6" stroke-width="7.5"/><path class="logo-w" d="M33 39 L41.5 64 L50 49 L58.5 64 L67 39" stroke-width="7.5"/><circle class="logo-ponto" cx="74.5" cy="29.4" r="7"/></svg><h1 class="sr-only">Mais clientes e menos trabalho pra você.</h1></div></div>
+<!-- Resumo em texto do que o site mostra depois que o JavaScript carrega,
+     pros robôs que não executam JS. Fica só pra leitor de tela/buscador
+     (sr-only) e some quando o React monta. É o MESMO conteúdo visível na
+     página (i18n/translations.ts, em português): se mudar lá, mude aqui. -->
+<div class="sr-only">
+<p>Sites · Organização · Atendimento automático. A WMC Tech resolve os problemas digitais do seu negócio, sem você precisar entender de tecnologia.</p>
+<h2>O que a gente resolve no seu negócio</h2>
+<ul>
+<li><strong>Site que traz cliente:</strong> sua empresa achada no Google e passando confiança pra quem chega.</li>
+<li><strong>Sistema do seu jeito:</strong> pedidos, clientes e caixa organizados num lugar só, sem planilha solta.</li>
+<li><strong>Atendimento que não dorme:</strong> responde e agenda no WhatsApp 24h, mesmo fora do horário.</li>
+<li><strong>Tudo conectado:</strong> seus sistemas conversando entre si, sem ninguém digitando duas vezes.</li>
+</ul>
+<h2>Você fala direto com quem constrói o seu projeto</h2>
+<p>Sem intermediário, no ar em semanas e não em meses, e tudo explicado sem jargão.</p>
+<h2>Do primeiro papo até estar no ar</h2>
+<ol>
+<li>Conversa: a gente entende seu negócio e o que precisa resolver. Sem compromisso.</li>
+<li>Proposta fechada: prazo e valor por escrito antes de começar.</li>
+<li>Você aprova antes: vê como vai ficar e pede ajuste à vontade.</li>
+<li>No ar e acompanhado: publicamos, ensinamos você a usar e seguimos por perto depois.</li>
+</ol>
+<h2>Contato</h2>
+<p>Orçamento sem compromisso, direto no WhatsApp: <a href="https://wa.me/5511917930168">(11) 91793-0168</a>. Projetos entregues em todo o Brasil.</p>
+</div>
+</div>
 <noscript>
   <p style="position:fixed;left:0;right:0;bottom:1.5rem;text-align:center;color:#eef2f6;font-family:sans-serif">
     Este site precisa de JavaScript para a experiência completa.
