@@ -25,6 +25,7 @@ const TelaPanel = forwardRef<
     const panel = t.telas[panelKey];
     const rootRef = useRef<HTMLDivElement>(null);
     const topicRefs = useRef<(HTMLDivElement | null)[]>([]);
+    const acesaRef = useRef(false);
 
     useImperativeHandle(ref, () => ({
       getElement() {
@@ -46,6 +47,17 @@ const TelaPanel = forwardRef<
         root.style.opacity = String(clamped);
         root.style.pointerEvents = clamped > 0.05 ? 'auto' : 'none';
         root.style.transform = `translate(${x}px, -50%)`;
+
+        // contorno desenhado pela energia (mesma linguagem da entrada da
+        // logo): dispara quando o painel termina de chegar e rearma quando
+        // ele some, pra tocar de novo a cada visita à tela
+        if (clamped >= 0.98 && !acesaRef.current) {
+          acesaRef.current = true;
+          root.classList.add('tela-panel--acesa');
+        } else if (clamped <= 0.02 && acesaRef.current) {
+          acesaRef.current = false;
+          root.classList.remove('tela-panel--acesa');
+        }
 
         // brilho passageiro de "energizado" — igual ao usado nos textos da
         // apresentação (applyTextEnergize em Experience3D.tsx)
@@ -69,6 +81,13 @@ const TelaPanel = forwardRef<
 
     return (
       <div ref={rootRef} className={`tela-panel tela-panel--${side}`} style={{ opacity: 0 }}>
+        {/* moldura: quatro traços que a energia desenha em sequência (topo →
+            direita → base → esquerda) + um pulso de luz no fim. Decorativo. */}
+        <span className="tela-borda tela-borda--topo" aria-hidden="true" />
+        <span className="tela-borda tela-borda--dir" aria-hidden="true" />
+        <span className="tela-borda tela-borda--base" aria-hidden="true" />
+        <span className="tela-borda tela-borda--esq" aria-hidden="true" />
+        <span className="tela-brilho" aria-hidden="true" />
         <ScrambleText as="div" className="tela-panel-eyebrow" text={panel.eyebrow} duration={430} />
         <h2 className="tela-panel-heading">
           <ScrambleText text={panel.heading} duration={620} />
