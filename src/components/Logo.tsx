@@ -1,3 +1,8 @@
+import type { CSSProperties } from 'react';
+
+/** atraso de entrada de cada traço (ver "Entrada da logo" no CSS) */
+const d = (segundos: number) => ({ '--d': `${segundos}s` }) as CSSProperties;
+
 /**
  * A logo em SVG inline: as cores vêm de classes (ver `.logo-*` em index.css),
  * que leem as variáveis do tema — assim a mesma marca vale no escuro e no
@@ -19,21 +24,23 @@ export function Logo({ className }: { className?: string }) {
       role="img"
       aria-label="WMC Tech"
     >
-      <path className="logo-anel" d="M85.7 31.7 A44 44 0 1 0 85.7 88.3" strokeWidth="6" />
-      <path className="logo-w" d="M30 44 L41 76 L52 56 L63 76 L74 44" strokeWidth="6" />
-      <circle className="logo-ponto" cx="85.7" cy="31.7" r="6.5" />
+      {/* pathLength=1: cada traço mede "1", então o CSS desenha qualquer
+          um deles com o mesmo stroke-dasharray, sem medir comprimento real */}
+      <path className="logo-anel logo-traco" pathLength={1} style={d(0.15)} d="M85.7 31.7 A44 44 0 1 0 85.7 88.3" strokeWidth="6" />
+      <path className="logo-w logo-traco" pathLength={1} style={d(0.45)} d="M30 44 L41 76 L52 56 L63 76 L74 44" strokeWidth="6" />
+      <circle className="logo-ponto logo-ponto-entra" cx="85.7" cy="31.7" r="6.5" />
       <g className="logo-w" transform="translate(122,29) scale(0.6)" strokeWidth="9">
-        <path d="M0 0 L17 60 L34 20 L51 60 L68 0" />
-        <path d="M82 60 L82 0 L106 40 L130 0 L130 60" />
-        <path d="M198 12 A30 30 0 1 0 198 48" />
+        <path className="logo-traco" pathLength={1} style={d(0.6)} d="M0 0 L17 60 L34 20 L51 60 L68 0" />
+        <path className="logo-traco" pathLength={1} style={d(0.75)} d="M82 60 L82 0 L106 40 L130 0 L130 60" />
+        <path className="logo-traco" pathLength={1} style={d(0.9)} d="M198 12 A30 30 0 1 0 198 48" />
       </g>
       <g className="logo-anel" transform="translate(122,76) scale(0.52)" strokeWidth="5.5">
-        <path d="M0 0 H24 M12 0 V30" />
-        <path d="M58 0 H34 V30 H58 M34 15 H52" />
-        <path d="M95 6 A15 15 0 1 0 95 24" />
-        <path d="M108 0 V30 M132 0 V30 M108 15 H132" />
+        <path className="logo-traco" pathLength={1} style={d(1.0)} d="M0 0 H24 M12 0 V30" />
+        <path className="logo-traco" pathLength={1} style={d(1.08)} d="M58 0 H34 V30 H58 M34 15 H52" />
+        <path className="logo-traco" pathLength={1} style={d(1.16)} d="M95 6 A15 15 0 1 0 95 24" />
+        <path className="logo-traco" pathLength={1} style={d(1.24)} d="M108 0 V30 M132 0 V30 M108 15 H132" />
       </g>
-      <path className="logo-linha" d="M199 84 H241" strokeWidth="1.5" />
+      <path className="logo-linha logo-traco" pathLength={1} style={d(1.35)} d="M199 84 H241" strokeWidth="1.5" />
     </svg>
   );
 }

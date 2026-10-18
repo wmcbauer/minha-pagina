@@ -22,8 +22,8 @@ export default function Hero({
       <div className="hero-overlay" />
       <div className="hero-glow" />
       {/* entrada do site: tudo "materializa" como dado se resolvendo — os
-          textos saem de ruído (ScrambleText) e a logo assenta de um borrão
-          claro pra imagem nítida, com uma varredura descendo por cima. A
+          textos saem de ruído (ScrambleText) e a logo é desenhada traço a
+          traço pela energia (ver "Entrada da logo" no CSS). A
           escada de delays abaixo é a ordem em que cada peça chega. */}
       <div className="hero-inner">
         <ScrambleText as="div" className="hero-eyebrow" text={t.hero.eyebrow} delay={80} duration={520} />

@@ -441,59 +441,70 @@ img { display: block; max-width: 100%; }
   max-width: 100%;
 }
 
-/* sem drop-shadow aqui: a logo é larga e quase preenche a própria caixa,
-   então um halo borrado espalha por todo o box e lê como um retângulo mais
-   claro atrás dela, não como brilho da forma. O PNG já traz o próprio
-   brilho embutido. */
 .hero-logo-img {
   display: block;
   width: 100%;
   height: auto;
-  animation: logo-materializa 1.15s cubic-bezier(0.2, 0.7, 0.3, 1) 0.2s both;
+  overflow: visible;
 }
 
-/* a logo nasce como uma faixa clara e estourada no meio, que se abre e vai
-   perdendo o borrão até virar a imagem — o `both` segura o estado inicial
-   durante o delay, senão ela pisca inteira antes de começar */
-@keyframes logo-materializa {
+/*
+ * Entrada da logo: ela é DESENHADA por energia, traço a traço — o anel se
+ * fecha, o W é escrito, o ponto acende, depois "WMC", "TECH" e o sublinhado.
+ * Cada traço tem pathLength=1 (ver Logo.tsx), então um dasharray de 1 serve
+ * pra todos; o atraso de cada um vem da variável --d no próprio elemento.
+ * A ponta do traço passa com um brilho forte (como o feixe do site) e
+ * assenta na cor normal. Termina sem filtro nenhum: com `both`, o último
+ * keyframe é o estado permanente.
+ */
+.hero-logo-img .logo-traco {
+  stroke-dasharray: 1 1;
+  stroke-dashoffset: 1;
+  animation: logo-traca 0.75s cubic-bezier(0.65, 0, 0.35, 1) var(--d, 0s) both;
+}
+
+@keyframes logo-traca {
   0% {
+    stroke-dashoffset: 1;
     opacity: 0;
-    clip-path: inset(46% 0 46% 0);
-    filter: blur(16px) brightness(2.6);
+    filter: drop-shadow(0 0 0 rgba(var(--accent-rgb), 0));
   }
-  55% {
+  8% {
     opacity: 1;
-    clip-path: inset(0 0 0 0);
-    filter: blur(6px) brightness(1.7);
   }
-  /* termina sem halo — com `fill-mode: both` este keyframe é o estado
-     permanente da logo, então qualquer drop-shadow aqui fica pra sempre */
+  70% {
+    filter: drop-shadow(0 0 6px rgba(var(--accent-rgb), 0.95));
+  }
   100% {
+    stroke-dashoffset: 0;
     opacity: 1;
-    clip-path: inset(0 0 0 0);
-    filter: blur(0) brightness(1);
+    filter: none;
   }
 }
 
-/* linha de varredura que desce por cima da logo enquanto ela assenta */
-.hero-logo-wrap::after {
-  content: '';
-  position: absolute;
-  left: -5%;
-  right: -5%;
-  height: 2px;
-  background: linear-gradient(90deg, transparent, rgba(var(--accent-rgb), 0.85), transparent);
-  filter: blur(1px);
-  opacity: 0;
-  pointer-events: none;
-  animation: logo-varredura 1.15s ease-out 0.2s;
+/* o ponto do anel "acende" quando o anel termina de fechar */
+.hero-logo-img .logo-ponto-entra {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: logo-ponto-acende 0.55s cubic-bezier(0.34, 1.56, 0.64, 1) 0.85s both;
 }
 
-@keyframes logo-varredura {
-  0% { top: 0; opacity: 0; }
-  15% { opacity: 1; }
-  85% { opacity: 1; }
-  100% { top: 100%; opacity: 0; }
+@keyframes logo-ponto-acende {
+  0% { transform: scale(0); opacity: 0; }
+  60% { transform: scale(1.5); opacity: 1; filter: drop-shadow(0 0 8px rgba(var(--accent-rgb), 1)); }
+  100% { transform: scale(1); opacity: 1; filter: none; }
+}
+
+/* fecho: um pulso de luz só, depois que tudo foi desenhado — sem halo
+   permanente (um drop-shadow parado vira retângulo claro atrás da logo) */
+.hero-logo-wrap {
+  animation: logo-pulso 0.9s ease-out 1.75s both;
+}
+
+@keyframes logo-pulso {
+  0% { filter: none; }
+  35% { filter: brightness(1.35) drop-shadow(0 0 14px rgba(var(--accent-rgb), 0.55)); }
+  100% { filter: none; }
 }
 
 /* É <h1> — a frase que resume a proposta é o título da página —, daí o
@@ -700,11 +711,12 @@ img { display: block; max-width: 100%; }
   border: 0;
 }
 
-/* quem pediu menos movimento recebe o hero já montado, sem varredura,
-   sem borrão e sem embaralhamento (o ScrambleText também respeita isso) */
+/* quem pediu menos movimento recebe o hero já montado, sem traço sendo
+   desenhado e sem embaralhamento (o ScrambleText também respeita isso) */
 @media (prefers-reduced-motion: reduce) {
-  .hero-logo-img { animation: none; }
-  .hero-logo-wrap::after { animation: none; display: none; }
+  .hero-logo-img .logo-traco,
+  .hero-logo-img .logo-ponto-entra,
+  .hero-logo-wrap { animation: none; stroke-dashoffset: 0; }
   .hero-scroll-cue { animation: none; }
   .hero-cta { animation: none; transition: none; }
 }
