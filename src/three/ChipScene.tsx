@@ -191,7 +191,7 @@ function screenVisibility(offset: number, targetOffset: number, index: number) {
 // verdade o seu lado da viewport, dividindo o espaço com o painel de texto
 // (a folga do painel, PANEL_GAP em Experience3D.tsx, acompanha esse valor)
 const SCREEN_W = 3.4;
-const SCREEN_H = 2.15;
+export const SCREEN_H = 2.15;
 const SCREEN_PLANE_GEO = new THREE.PlaneGeometry(SCREEN_W, SCREEN_H);
 
 /** Uma "tela" que só aparece quando o ponto de energia chega nela, e

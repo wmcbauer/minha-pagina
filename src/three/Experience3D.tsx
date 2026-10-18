@@ -3,7 +3,7 @@ import { Canvas, useThree } from '@react-three/fiber';
 import { ScrollControls } from '@react-three/drei';
 import { EffectComposer, Bloom } from '@react-three/postprocessing';
 import * as THREE from 'three';
-import ChipScene from './ChipScene';
+import ChipScene, { SCREEN_H } from './ChipScene';
 import { SCENE_NODES } from './nodesConfig';
 import {
   SEG_COUNT, SEG_LEN, HERO_FADE_END, JOIN_END,
@@ -104,6 +104,8 @@ export default function Experience3D({ onPronto }: { onPronto?: () => void }) {
   const beam4Gradient = useRef<SVGLinearGradientElement>(null);
   const cameraRef = useRef<THREE.Camera | null>(null);
   const originVecRef = useRef(new THREE.Vector3());
+  // rascunho pra base da tela no layout compacto (posicionamento do texto)
+  const baseDaTelaRef = useRef(new THREE.Vector3());
   const telaPanelRefs = useRef<(TelaPanelHandle | null)[]>([]);
   // offset amortecido (scroll.offset do drei), atualizado a cada frame pelo
   // ScrollOffsetCapture — a MESMA fonte que a cena 3D usa, pra tudo (hero,
@@ -530,9 +532,27 @@ export default function Experience3D({ onPronto }: { onPronto?: () => void }) {
                 : screen.y;
             // se nem assim cabe (janela muito baixa), centraliza — o painel
             // tem max-height e rola por dentro (ver CSS)
-            const top = minCentro <= maxCentro
+            let top = minCentro <= maxCentro
               ? Math.max(minCentro, Math.min(desejado, maxCentro))
               : alturaJanela / 2;
+            // Compacto (celular) com tela: o texto começa ABAIXO da base
+            // projetada da tela, nunca por cima dela. A tela vem de frente
+            // nesse layout (sem giro), então a base é o centro do nó descido
+            // meia altura. Se o texto não couber no que sobra até o rodapé,
+            // ele rola por dentro (max-height) em vez de subir sobre a tela.
+            if (compactoRef.current && !node.semTela) {
+              const base = projectPoint(
+                originVecRef.current,
+                baseDaTelaRef.current.set(node.position.x, node.position.y - SCREEN_H / 2, node.position.z),
+                camera,
+              ).y;
+              const topoLivre = Math.max(margemTopo, base + 14);
+              const espaco = Math.max(140, alturaJanela - margemBase - topoLivre);
+              el.style.maxHeight = `${espaco}px`;
+              top = topoLivre + Math.min(el.offsetHeight, espaco) / 2;
+            } else if (el.style.maxHeight) {
+              el.style.maxHeight = '';
+            }
             el.style.left = `${left}px`;
             el.style.top = `${top}px`;
 

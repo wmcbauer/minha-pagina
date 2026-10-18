@@ -1495,6 +1495,21 @@ img { display: block; max-width: 100%; }
     padding: 0 6vw;
   }
 
+  /* texto das telas no celular/tablet: vai ABAIXO da tela (o JS calcula a
+     base dela e limita a altura do painel), e rola por dentro se não couber
+     — por isso o véu não pode sair da caixa aqui (seria cortado e inflaria
+     a rolagem) e o respiro interno é menor */
+  .tela-panel--center {
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    scrollbar-width: thin;
+    padding: 1rem 1.1rem;
+  }
+
+  .tela-panel--center::before {
+    inset: 0;
+  }
+
   /* a trilha encosta mais na borda pra roubar menos largura do conteúdo */
   .scene-nav {
     right: 0.75rem;
@@ -1623,9 +1638,9 @@ img { display: block; max-width: 100%; }
     padding: 0.55rem 1.05rem;
   }
 
-  /* o véu acompanha o painel menor, senão sobra sombra pra fora dele */
+  /* o véu fica dentro da caixa (ela rola por dentro no celular) */
   .tela-panel--center::before {
-    inset: -1.5rem -1.6rem;
+    inset: 0;
   }
 
   /* trilha na horizontal, no alto da tela: logo abaixo do seletor de idioma
