@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type ElementType } from 'react';
+import { createContext, useContext, useEffect, useRef, useState, type ElementType } from 'react';
 
 // glifos que ocupam o lugar de cada letra enquanto ela ainda não assentou —
 // dígitos e símbolos técnicos, pra dar leitura de dado bruto virando palavra
@@ -16,7 +16,17 @@ const ruido = (texto: string) =>
   texto.split('').map((c) => (c === ' ' ? ' ' : glifo())).join('');
 
 /**
- * Texto que "materializa": começa como ruído do mesmo comprimento e vai
+ * `false` em blocos que montam INVISÍVEIS (a apresentação e os painéis das
+ * telas, que só aparecem depois de vários gestos de scroll): ali o texto já
+ * nasce resolvido, sem a animação de entrada. Ela rodaria escondida de
+ * qualquer jeito (terminava antes de o bloco aparecer), só que eram ~30
+ * textos re-renderizando a cada quadro bem no carregamento, o que travava o
+ * celular. Trocas de idioma depois continuam animando normalmente.
+ */
+export const AnimarEntrada = createContext(true);
+
+/**
+ * Texto que "materializa":começa como ruído do mesmo comprimento e vai
  * resolvendo da esquerda pra direita até virar a frase real.
  *
  * O ruído inicial tem o tamanho final de propósito — assim o elemento já
@@ -39,7 +49,8 @@ export default function ScrambleText({
   className?: string;
   as?: ElementType;
 }) {
-  const [visivel, setVisivel] = useState(() => (prefereReduzido() ? text : ruido(text)));
+  const animarEntrada = useContext(AnimarEntrada);
+  const [visivel, setVisivel] = useState(() => (prefereReduzido() || !animarEntrada ? text : ruido(text)));
   const frameRef = useRef(0);
   const primeiraVezRef = useRef(true);
 
@@ -47,10 +58,11 @@ export default function ScrambleText({
     // o delay existe pra escalonar a abertura do site. Numa troca de idioma
     // ele só faria o texto demorar a voltar, então a partir da segunda vez
     // a materialização começa na hora.
-    const espera = primeiraVezRef.current ? delay : 0;
+    const primeiraVez = primeiraVezRef.current;
+    const espera = primeiraVez ? delay : 0;
     primeiraVezRef.current = false;
 
-    if (prefereReduzido()) {
+    if (prefereReduzido() || (primeiraVez && !animarEntrada)) {
       setVisivel(text);
       return;
     }

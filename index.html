@@ -100,7 +100,13 @@
 
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
-<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Syne:wght@400;600;700&display=swap" rel="stylesheet"/>
+<!-- Fontes sem travar a primeira pintura: como `stylesheet` normal, o
+     navegador esperava o CSS do Google chegar antes de desenhar QUALQUER
+     coisa (no 4G do celular, meio segundo ou mais de tela branca). A tela de
+     abertura não tem texto visível, então dá pra baixar as fontes em paralelo
+     e aplicar quando chegarem (display=swap já cuida da troca). -->
+<link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Syne:wght@400;600;700&display=swap" onload="this.onload=null;this.rel='stylesheet'"/>
+<noscript><link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Syne:wght@400;600;700&display=swap" rel="stylesheet"/></noscript>
 </head>
 <body>
 <!-- Primeira pintura: aparece na hora, antes de qualquer JavaScript, e é o

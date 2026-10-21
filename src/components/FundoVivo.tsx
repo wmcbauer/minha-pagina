@@ -106,8 +106,15 @@ export default function FundoVivo() {
       espera: atraso,
     });
 
+    // No celular o desenho vai em densidade 1 e a 30 quadros por segundo: é
+    // fundo ambiente, discreto e de movimento lento (os pulsos andam por
+    // tempo, não por quadro, então a velocidade é a mesma), e pintar a tela
+    // cheia 60 vezes por segundo disputava a CPU com o resto da abertura.
+    const leve = window.matchMedia('(max-width: 1024px), (pointer: coarse)').matches;
+    const INTERVALO_MIN_MS = leve ? 1000 / 30 - 2 : 0;
+
     const montar = () => {
-      dpr = Math.min(window.devicePixelRatio || 1, 1.5);
+      dpr = leve ? 1 : Math.min(window.devicePixelRatio || 1, 1.5);
       larg = window.innerWidth;
       alt = window.innerHeight;
       canvas.width = Math.round(larg * dpr);
@@ -237,6 +244,7 @@ export default function FundoVivo() {
     let ultimo = performance.now();
     const loop = (agora: number) => {
       raf = requestAnimationFrame(loop);
+      if (agora - ultimo < INTERVALO_MIN_MS) return;
       const dt = Math.min(0.05, (agora - ultimo) / 1000);
       ultimo = agora;
       // o contêiner (.presentation) fica `visibility: hidden` quando a cena

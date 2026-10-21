@@ -1,7 +1,6 @@
-import { Suspense, useEffect, useRef } from 'react';
-import { Canvas, useThree } from '@react-three/fiber';
+import { Suspense, lazy, useEffect, useRef, useState } from 'react';
+import { Canvas, invalidate, useThree } from '@react-three/fiber';
 import { ScrollControls } from '@react-three/drei';
-import { EffectComposer, Bloom } from '@react-three/postprocessing';
 import * as THREE from 'three';
 import ChipScene, { SCREEN_H } from './ChipScene';
 import { SCENE_NODES } from './nodesConfig';
@@ -19,12 +18,30 @@ import { getTheme, registrarRenderizadorDaCena, useTheme } from '../lib/theme';
 import { CENA, useMudancaDeTema } from './sceneTheme';
 import Hero from '../components/Hero';
 import Presentation from '../components/Presentation';
+import { AnimarEntrada } from '../components/ScrambleText';
 import FundoVivo from '../components/FundoVivo';
 import TelaPanel, { type TelaPanelHandle } from '../components/TelaPanel';
 import SceneNav, { type SceneNavHandle, type SceneNavStop } from '../components/SceneNav';
 import { useLanguage } from '../hooks/useLanguage';
 import { useCompactLayout } from '../hooks/useCompactLayout';
 import type { EnergyCardHandle } from '../components/EnergyCard';
+
+// bloom em pedaço separado, baixado só quando o visitante começa a rolar
+// (ver Brilho.tsx e o `tick` abaixo)
+const Brilho = lazy(() => import('./Brilho'));
+
+// A partir daqui a apresentação começa a esmaecer e a cena 3D aparece. Antes
+// disso ela fica 100% coberta pelo fundo sólido da apresentação, então não há
+// por que desenhá-la a cada quadro: o Canvas roda em `frameloop="demand"` e o
+// `tick` só pede quadros contínuos depois deste ponto. Até lá, os únicos
+// quadros são os que o próprio drei pede enquanto o scroll se move (é isso
+// que mantém o offset amortecido em dia). A folga cobre o amortecimento.
+const CENA_3D_VISIVEL = PRES_WIN_END - SEG_LEN * 0.05;
+// Nem o primeiro quadro precisa sair na abertura: ele é o mais caro de todos
+// (compila os shaders da cena inteira) e cairia bem no meio do carregamento,
+// travando o celular justo quando o hero está aparecendo. O Canvas começa em
+// "never" e passa a "demand" no primeiro scroll (ou troca de tema) — ainda há
+// a abertura inteira pela frente até a cena ficar à vista.
 
 // largura do painel (igual à do CSS) e folga do centro do nó até o painel —
 // a folga tem que ser maior que a METADE da tela projetada (SCREEN_W em
@@ -70,6 +87,17 @@ export default function Experience3D({ onPronto }: { onPronto?: () => void }) {
   useEffect(() => {
     onProntoRef.current?.();
   }, []);
+  const [montarCanvas, setMontarCanvas] = useState(false);
+  useEffect(() => {
+    let timer = 0;
+    const raf = requestAnimationFrame(() => {
+      timer = window.setTimeout(() => setMontarCanvas(true), 0);
+    });
+    return () => {
+      cancelAnimationFrame(raf);
+      window.clearTimeout(timer);
+    };
+  }, []);
   const compacto = useCompactLayout();
   // o loop de animação roda num efeito com deps [], então não veria a
   // mudança de estado — este ref é o espelho que ele lê
@@ -111,6 +139,27 @@ export default function Experience3D({ onPronto }: { onPronto?: () => void }) {
   // ScrollOffsetCapture — a MESMA fonte que a cena 3D usa, pra tudo (hero,
   // apresentação, feixes) se mover exatamente junto com ela
   const offsetRef = useRef(0);
+  const [carregarBrilho, setCarregarBrilho] = useState(false);
+  // pede ao `tick` uns quadros completos mesmo com o scroll parado
+  const refazerQuadroRef = useRef(false);
+  useEffect(() => {
+    refazerQuadroRef.current = true;
+  }, [t]);
+  useEffect(() => {
+    const refazer = () => {
+      refazerQuadroRef.current = true;
+    };
+    document.fonts?.addEventListener('loadingdone', refazer);
+    window.addEventListener('resize', refazer);
+    return () => {
+      document.fonts?.removeEventListener('loadingdone', refazer);
+      window.removeEventListener('resize', refazer);
+    };
+  }, []);
+  const pediuBrilhoRef = useRef(false);
+  const [cenaAcordada, setCenaAcordada] = useState(false);
+  const tema0Ref = useRef(tema);
+  if (tema !== tema0Ref.current && !cenaAcordada) setCenaAcordada(true);
 
   // mede o ponto de onde o feixe 1 sai (borda de baixo do retângulo da
   // logo) — precisa ficar fora do listener de 'scroll' (ver handleScrollReady)
@@ -137,6 +186,9 @@ export default function Experience3D({ onPronto }: { onPronto?: () => void }) {
     // useEffect de navegação por gesto, abaixo) — uma barra arrastável
     // deixaria escapar pro meio de um bloco, driblando esse encaixe
     el.classList.add('scroll-sem-barra');
+    if (primeiraVez) {
+      el.addEventListener('scroll', () => setCenaAcordada(true), { once: true, passive: true });
+    }
     if (primeiraVez) requestAnimationFrame(measureLogo);
   };
 
@@ -294,12 +346,51 @@ export default function Experience3D({ onPronto }: { onPronto?: () => void }) {
     const velocity = { current: 0 };
     const startTime = performance.now();
     let rafId = 0;
+    // Parado na abertura, nada aqui muda de um quadro pro outro — mas cada
+    // passada lê medidas do layout (offsetWidth, getBoundingClientRect) logo
+    // depois de escrever estilos, o que obriga o navegador a recalcular a
+    // página inteira várias vezes por quadro. No celular isso sozinho
+    // ocupava boa parte da CPU com o site parado. Então, com o scroll parado
+    // e o feixe já assentado, só refaz quando algo pode ter mudado o layout
+    // (troca de idioma, fonte que chegou, tamanho da janela — ver
+    // refazerQuadroRef) e, por garantia, a cada REFRESCO_PARADO_MS. Na parte
+    // 3D não pula: a câmera ainda pode estar assentando e os painéis
+    // acompanham ela.
+    const REFRESCO_PARADO_MS = 1000;
+    let ultimaPassada = 0;
+    let quadrosParados = 0;
 
     const tick = () => {
       const el = scrollElRef.current;
+      const agora = performance.now();
+      const parado =
+        el !== null &&
+        offsetRef.current < CENA_3D_VISIVEL &&
+        offsetRef.current === prevOffset.current &&
+        velocity.current < 0.001;
+      quadrosParados = parado ? quadrosParados + 1 : 0;
+      // alguns quadros de folga antes de começar a pular, pro último estado
+      // (velocidade zerando, brilho do texto apagando) chegar a ser desenhado
+      if (refazerQuadroRef.current) {
+        refazerQuadroRef.current = false;
+        quadrosParados = 0;
+      }
+      if (quadrosParados > 10 && agora - ultimaPassada < REFRESCO_PARADO_MS) {
+        rafId = requestAnimationFrame(tick);
+        return;
+      }
       if (el) {
+        ultimaPassada = agora;
         const offset = offsetRef.current;
-        const t = (performance.now() - startTime) / 1000;
+        const t = (agora - startTime) / 1000;
+
+        if (offset >= CENA_3D_VISIVEL) invalidate();
+        // primeiro movimento de scroll: hora de baixar o bloom, bem antes da
+        // cena 3D aparecer (a abertura ainda tem vários gestos pela frente)
+        if (offset > 0.002 && !pediuBrilhoRef.current) {
+          pediuBrilhoRef.current = true;
+          setCarregarBrilho(true);
+        }
 
         const rawDelta = offset - prevOffset.current;
         prevOffset.current = offset;
@@ -575,38 +666,48 @@ export default function Experience3D({ onPronto }: { onPronto?: () => void }) {
 
   return (
     <div className="experience-3d">
-      <Canvas
-        // em celular a tela é densa (dpr 3 é comum) e renderizar nessa
-        // densidade com bloom por cima derruba o frame rate — trava em 1,
-        // que na prática é imperceptível num painel pequeno
-        dpr={compacto ? 1 : [1, 1.5]}
-        gl={{ antialias: true, powerPreference: 'high-performance' }}
-        camera={{ fov: 55, position: [0, 0.4, 7], near: 0.1, far: 80 }}
-      >
-        <color attach="background" args={[CENA[getTheme()].fundo]} />
-        <fog attach="fog" args={[CENA[getTheme()].fundo, 10, 34]} />
-        <CenaTema />
-        <ambientLight intensity={0.5} />
-        <pointLight position={[0, 2, 4]} intensity={1.4} color="#8fc3f0" />
-        <pointLight position={[-4, -2, -14]} intensity={0.8} color="#4a8fd4" />
-        <Suspense fallback={null}>
-          <ScrollControls pages={SCENE_NODES.length} damping={0.25}>
-            <ScrollElCapture onReady={handleScrollReady} />
-            <ScrollOffsetCapture offsetRef={offsetRef} />
-            <CameraCapture onReady={(cam) => { cameraRef.current = cam; }} />
-            <ChipScene />
-            <EffectComposer multisampling={0}>
-              <Bloom
-                intensity={CENA[tema].bloom}
-                luminanceThreshold={0.15}
-                luminanceSmoothing={0.3}
-                mipmapBlur
-                radius={0.7}
-              />
-            </EffectComposer>
-          </ScrollControls>
-        </Suspense>
-      </Canvas>
+      {/* o Canvas entra um quadro DEPOIS do resto: criar o contexto WebGL e
+          montar a cena é a tarefa mais pesada do carregamento, e assim o hero
+          já aparece pintado antes dela, em vez de esperar tudo junto */}
+      {montarCanvas && (
+        <Canvas
+          // em celular a tela é densa (dpr 3 é comum) e renderizar nessa
+          // densidade com bloom por cima derruba o frame rate — trava em 1,
+          // que na prática é imperceptível num painel pequeno
+          dpr={compacto ? 1 : [1, 1.5]}
+          frameloop={cenaAcordada ? 'demand' : 'never'}
+          // sem antialias: a imagem final sai do EffectComposer (bloom), que
+          // desenha num buffer próprio sem multisampling — o antialias do canvas
+          // não aparecia em lugar nenhum, só gastava memória e banda de GPU
+          gl={{ antialias: false, powerPreference: 'high-performance' }}
+          // a checagem de erro de shader força o navegador a esperar cada
+          // compilação terminar (trava o carregamento); só serve pra depurar
+          onCreated={({ gl }) => {
+            gl.debug.checkShaderErrors = import.meta.env.DEV;
+          }}
+          camera={{ fov: 55, position: [0, 0.4, 7], near: 0.1, far: 80 }}
+        >
+          <color attach="background" args={[CENA[getTheme()].fundo]} />
+          <fog attach="fog" args={[CENA[getTheme()].fundo, 10, 34]} />
+          <CenaTema />
+          <ambientLight intensity={0.5} />
+          <pointLight position={[0, 2, 4]} intensity={1.4} color="#8fc3f0" />
+          <pointLight position={[-4, -2, -14]} intensity={0.8} color="#4a8fd4" />
+          <Suspense fallback={null}>
+            <ScrollControls pages={SCENE_NODES.length} damping={0.25}>
+              <ScrollElCapture onReady={handleScrollReady} />
+              <ScrollOffsetCapture offsetRef={offsetRef} />
+              <CameraCapture onReady={(cam) => { cameraRef.current = cam; }} />
+              <ChipScene />
+              {carregarBrilho && (
+                <Suspense fallback={null}>
+                  <Brilho intensidade={CENA[tema].bloom} />
+                </Suspense>
+              )}
+            </ScrollControls>
+          </Suspense>
+        </Canvas>
+      )}
 
       {/* hero e apresentação — elementos HTML comuns, fora do Canvas: tela
           cheia de verdade, sem bloquear o scroll do que está por baixo */}
@@ -618,30 +719,35 @@ export default function Experience3D({ onPronto }: { onPronto?: () => void }) {
             textos: vive aqui dentro pra esmaecer junto com a apresentação
             quando a câmera parte pras telas 3D */}
         <FundoVivo />
-        <Presentation
-          worldRef={presWorldRef}
-          refs={{
-            resumo: { block: resumoRef, card: resumoCardRef },
-            quemSomos: { block: quemSomosRef, card: quemSomosCardRef },
-            transicao: { block: transicaoRef, card: transicaoCardRef },
-          }}
-        />
+        {/* textos que montam invisíveis: nascem prontos (ver AnimarEntrada) */}
+        <AnimarEntrada.Provider value={false}>
+          <Presentation
+            worldRef={presWorldRef}
+            refs={{
+              resumo: { block: resumoRef, card: resumoCardRef },
+              quemSomos: { block: quemSomosRef, card: quemSomosCardRef },
+              transicao: { block: transicaoRef, card: transicaoCardRef },
+            }}
+          />
+        </AnimarEntrada.Provider>
       </div>
 
       <SceneNav ref={sceneNavRef} stops={navStops} onJump={jumpTo} onStep={stepBy} />
 
       {/* texto ao lado de cada tela — alternando de lado, posicionado a cada
           frame pela projeção 2D da posição 3D do nó (ver tick) */}
-      {TELA_PANELS.map(({ node, index, side }) => (
-        <TelaPanel
-          key={node.id}
-          panelKey={node.panelKey!}
-          side={compacto ? 'center' : side}
-          ref={(handle) => {
-            telaPanelRefs.current[index] = handle;
-          }}
-        />
-      ))}
+      <AnimarEntrada.Provider value={false}>
+        {TELA_PANELS.map(({ node, index, side }) => (
+          <TelaPanel
+            key={node.id}
+            panelKey={node.panelKey!}
+            side={compacto ? 'center' : side}
+            ref={(handle) => {
+              telaPanelRefs.current[index] = handle;
+            }}
+          />
+        ))}
+      </AnimarEntrada.Provider>
 
       {/* quatro trechos de feixe — logo→texto1 (vertical), texto1→texto2
           (horizontal, pra direita), texto2→texto3 (diagonal, pra baixo-
