@@ -31,6 +31,11 @@ export interface Translation {
     label: string;
     mensagem: string;
   };
+  /** link pro Instagram: `label` aparece no contato, `aria` é o nome do ícone do topo */
+  instagram: {
+    label: string;
+    aria: string;
+  };
   /** botão sol/lua: o nome acessível diz pra qual tema ele leva */
   tema: {
     paraClaro: string;
@@ -91,6 +96,7 @@ export const translations: Record<Language, Translation> = {
       label: 'Falar no WhatsApp',
       mensagem: 'Olá! Vi o site da WMC Tech e gostaria de um orçamento.',
     },
+    instagram: { label: 'Ver projetos no Instagram', aria: 'Instagram da WMC Tech (@wmc.tech)' },
     tema: { paraClaro: 'Mudar para o tema claro', paraEscuro: 'Mudar para o tema escuro' },
     hero: {
       eyebrow: 'Sites · Organização · Atendimento automático',
@@ -193,6 +199,7 @@ export const translations: Record<Language, Translation> = {
       label: 'Chat on WhatsApp',
       mensagem: 'Hi! I saw the WMC Tech website and would like a quote.',
     },
+    instagram: { label: 'See our work on Instagram', aria: 'WMC Tech on Instagram (@wmc.tech)' },
     tema: { paraClaro: 'Switch to light theme', paraEscuro: 'Switch to dark theme' },
     hero: {
       eyebrow: 'Websites · Organization · Automatic customer service',
@@ -295,6 +302,7 @@ export const translations: Record<Language, Translation> = {
       label: 'Hablar por WhatsApp',
       mensagem: '¡Hola! Vi el sitio de WMC Tech y me gustaría un presupuesto.',
     },
+    instagram: { label: 'Ver proyectos en Instagram', aria: 'Instagram de WMC Tech (@wmc.tech)' },
     tema: { paraClaro: 'Cambiar al tema claro', paraEscuro: 'Cambiar al tema oscuro' },
     hero: {
       eyebrow: 'Sitios web · Organización · Atención automática',

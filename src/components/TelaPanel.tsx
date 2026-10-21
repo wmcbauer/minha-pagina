@@ -3,7 +3,7 @@ import ScrambleText from './ScrambleText';
 import { useLanguage } from '../hooks/useLanguage';
 import type { TelaKey } from '../i18n/translations';
 import type { PanelSide } from '../three/nodesConfig';
-import { whatsappUrl } from '../config/contact';
+import { INSTAGRAM_URL, whatsappUrl } from '../config/contact';
 import { registrarEvento } from '../lib/analytics';
 
 export interface TelaPanelHandle {
@@ -120,6 +120,25 @@ const TelaPanel = forwardRef<
             onClick={() => registrarEvento('whatsapp_contato')}
           >
             <ScrambleText text={panel.cta} duration={430} />
+          </a>
+        )}
+        {/* no fecho do site, além do WhatsApp, o Instagram — quem ainda não
+            está pronto pra conversar pode ver os projetos */}
+        {panelKey === 'contato' && (
+          <a
+            className="tela-panel-insta"
+            href={INSTAGRAM_URL}
+            target="_blank"
+            rel="noreferrer"
+            onClick={() => registrarEvento('instagram_contato')}
+          >
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <rect x="3" y="3" width="16" height="16" rx="5" />
+      <circle cx="12" cy="12" r="4" />
+      <circle cx="17.5" cy="6.5" r="0.6" fill="currentColor" />
+    </svg>
+            <span>{t.instagram.label}</span>
+            <span className="tela-panel-insta-user">@wmc.tech</span>
           </a>
         )}
       </div>
